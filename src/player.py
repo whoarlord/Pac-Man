@@ -2,17 +2,18 @@ from src.movement_entity import Movement_entity
 
 
 class Player(Movement_entity):
-    """Pac-Man player: stores its position, score and power-up state.
-
-    The position is stored as (x, y), where x is the column and y is the row.
-    The origin (0, 0) is the top-left corner, so y grows downwards.
-    This class does not know the map: checking walls and collisions is
-    done outside, and these methods are called when needed.
-    """
+    """Pac-Man player: adds score and power-up state to Movement_entity."""
 
     POINTS_PER_PACGUM = 10
     POINTS_PER_SUPER_PACGUM = 50
     POINTS_PER_GHOST = 200
+
+    def __init__(self, x: int, y: int) -> None:
+        """Create player with position (x, y), score 0 and not powered up."""
+
+        super().__init__(x, y)
+        self.score = 0
+        self.is_powered_up = False
 
     def add_pacgum_points(self) -> None:
         """Add POINTS_PER_PACGUM to the score.
