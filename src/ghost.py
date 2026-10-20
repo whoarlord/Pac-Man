@@ -13,7 +13,7 @@ class Ghost(MovementEntity):
     the map). Distances to the player are computed with BFS.
     """
 
-    def __init__(self, x, y) -> None:
+    def __init__(self, x: int, y: int) -> None:
         """Create a ghost at position (x, y)."""
 
         super().__init__(x, y)

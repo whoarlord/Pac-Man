@@ -2,7 +2,7 @@ from src.movement_entity import MovementEntity
 
 
 class Player(MovementEntity):
-    """Pac-Man player: adds score and power-up state to Movement_entity."""
+    """Pac-Man player: adds score and power-up state to MovementEntity."""
 
     POINTS_PER_PACGUM = 10
     POINTS_PER_SUPER_PACGUM = 50
