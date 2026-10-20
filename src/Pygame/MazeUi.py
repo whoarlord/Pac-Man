@@ -6,6 +6,7 @@ from typing import Tuple
 
 class MazeUi:
     def __init__(self, width: int, height: int):
+        pygame.init()
         self.width = width
         self.height = height
         self.window_width = 1920
@@ -117,32 +118,22 @@ class MazeUi:
         pink_ghost = entityAdapter.makePinkGhostImage()
         mazeUi.place_element(pink_ghost, self.width, self.height)
 
+    def event_loop(self):
+        clock = pygame.time.Clock()
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+            pygame.display.flip()
+            clock.tick(60)
+        pygame.quit()
+
 
 if __name__ == '__main__':
     # pygame setup
-    pygame.init()
     mazeUi = MazeUi(20, 20)
     entityAdapter = EntitiesAdapter(mazeUi.cell_size)
     mazeUi.makeMaze(20, 20)
     mazeUi.setup_entities(entityAdapter)
-    clock = pygame.time.Clock()
-    running = True
-
-
-    while running:
-        # poll for events
-        # pygame.QUIT event means the user clicked X to close your window
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-
-        # fill the screen with a color to wipe away anything from last frame
-
-        # RENDER YOUR GAME HERE
-
-        # flip() the display to put your work on screen
-        pygame.display.flip()
-
-        clock.tick(60)  # limits FPS to 60
-
-    pygame.quit()
+    mazeUi.event_loop()
