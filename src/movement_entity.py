@@ -1,4 +1,4 @@
-class Movement_entity:
+class MovementEntity:
     """Pac-Man entity: stores its position.
 
     The position is stored as (x, y), where x is the column and y

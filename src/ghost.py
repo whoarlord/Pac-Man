@@ -1,9 +1,9 @@
-from src.movement_entity import Movement_entity
+from src.movement_entity import MovementEntity
 from typing import Callable
 from collections import deque
 
 
-class Ghost(Movement_entity):
+class Ghost(MovementEntity):
     """Pac-Man ghost: chases the player or runs away from it.
 
     Which of the two to use depends on player.is_powered_up, and that

@@ -1,7 +1,7 @@
-from src.movement_entity import Movement_entity
+from src.movement_entity import MovementEntity
 
 
-class Player(Movement_entity):
+class Player(MovementEntity):
     """Pac-Man player: adds score and power-up state to Movement_entity."""
 
     POINTS_PER_PACGUM = 10
