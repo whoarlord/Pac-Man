@@ -1,6 +1,7 @@
 from src.movement_entity import MovementEntity
 from typing import Callable
 from collections import deque
+from enum import Enum
 
 
 class Ghost(MovementEntity):
@@ -12,8 +13,13 @@ class Ghost(MovementEntity):
     that says whether a cell can be stepped on (not a wall and inside
     the map). Distances to the player are computed with BFS.
     """
+    class GhostColor(Enum):
+        RED = 'red'
+        YELLOW = 'yellow'
+        BLUE = 'blue'
+        PINK = 'pink'
 
-    def __init__(self, x, y) -> None:
+    def __init__(self, x, y, color: GhostColor) -> None:
         """Create a ghost at position (x, y)."""
 
         super().__init__(x, y)

@@ -15,10 +15,10 @@ class EntityFactory:
 
         return Player(x, y)
 
-    def _create_ghost(self, x: int, y: int) -> Ghost:
+    def _create_ghost(self, x: int, y: int, color: Ghost.GhostColor) -> Ghost:
         """Create a Ghost at position (x, y)."""
 
-        return Ghost(x, y)
+        return Ghost(x, y, color)
 
     def initialize_entity(self, player_pos: tuple[int, int],
                           ghosts_pos: list[tuple[int, int]]
@@ -37,9 +37,17 @@ class EntityFactory:
         player = self._create_player(player_x, player_y)
 
         ghosts: list[Ghost] = []
+        ghost_colors = [
+            Ghost.GhostColor.RED,
+            Ghost.GhostColor.BLUE,
+            Ghost.GhostColor.PINK,
+            Ghost.GhostColor.YELLOW
+        ]
         for ghost_pos in ghosts_pos:
+            if (len(ghost_colors) <= 0):
+                break
             ghost_x, ghost_y = ghost_pos
-            ghost = self._create_ghost(ghost_x, ghost_y)
+            ghost = self._create_ghost(ghost_x, ghost_y, ghost_colors.pop())
             ghosts.append(ghost)
 
         return (player, ghosts)
