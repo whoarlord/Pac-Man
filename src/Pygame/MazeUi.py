@@ -1,7 +1,7 @@
 import pygame
 from mazegenerator import MazeGenerator
 from . import EntitiesAdapter
-from .. import EntityFactory, Ghost
+from .. import EntityFactory, Ghost, Player
 from typing import Tuple
 
 
@@ -20,6 +20,8 @@ class MazeUi:
         self.screen: pygame.Surface = pygame.display.set_mode(
             (self.window_width, self.window_height))
         self.screen.fill("black")
+        self.player: Player | None = None
+        self.ghosts: list[Ghost] = []
 
     def calculate_cell_size(self):
         cell_width = (self.window_width - self.margin) / self.width
@@ -111,26 +113,36 @@ class MazeUi:
                        entityFactory: EntityFactory):
         player = entityAdapter.makePlayerImage()
         self.place_player(player)
-        entityFactory.create_player((self.width - 1) / 2, (self.height - 1) / 2, player)
+        self.player = entityFactory.create_player((self.width - 1) / 2,
+                                                  (self.height - 1) / 2,
+                                                  player)
 
         red_ghost = entityAdapter.makeRedGhostImage()
         self.place_element(red_ghost, 0, 0)
-        entityFactory.create_ghost(0, 0, red_ghost, Ghost.GhostColor.RED)
+        self.ghosts.append(
+            entityFactory.create_ghost(0, 0, red_ghost, Ghost.GhostColor.RED)
+        )
 
         yellow_ghost = entityAdapter.makeYellowGhostImage()
         self.place_element(yellow_ghost, 0, self.height - 1)
-        entityFactory.create_ghost(0, self.height - 1, red_ghost,
-                                   Ghost.GhostColor.YELLOW)
+        self.ghosts.append(
+            entityFactory.create_ghost(0, self.height - 1, yellow_ghost,
+                                       Ghost.GhostColor.YELLOW)
+        )
 
         blue_ghost = entityAdapter.makeBlueGhostImage()
         self.place_element(blue_ghost, self.width - 1, 0)
-        entityFactory.create_ghost(self.width - 1, 0, red_ghost,
-                                   Ghost.GhostColor.BLUE)
+        self.ghosts.append(
+            entityFactory.create_ghost(self.width - 1, 0, blue_ghost,
+                                       Ghost.GhostColor.BLUE)
+        )
 
         pink_ghost = entityAdapter.makePinkGhostImage()
         self.place_element(pink_ghost, self.width - 1, self.height - 1)
-        entityFactory.create_ghost(self.width - 1, self.height - 1, red_ghost,
-                                   Ghost.GhostColor.PINK)
+        self.ghosts.append(
+            entityFactory.create_ghost(self.width - 1, self.height - 1, 
+                                       pink_ghost, Ghost.GhostColor.PINK)
+        )
 
     def event_loop(self):
         clock = pygame.time.Clock()
