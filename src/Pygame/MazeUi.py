@@ -90,8 +90,8 @@ class MazeUi:
                 y += increment + margin
 
     def place_player(self, player: pygame.Surface):
-        x = int(self.width / 2)
-        y = int(self.height / 2)
+        x = int((self.width - 1) / 2)
+        y = int((self.height - 1) / 2)
         print(f"x: {x}")
         print(f"y: {y}")
         self.place_element(player, x, y)
@@ -102,21 +102,21 @@ class MazeUi:
     def calculate_rect_for_cell(self, cell: Tuple[int, int]):
         x_increment = (self.window_width - self.margin) / self.width
         y_increment = (self.window_height - self.margin) / self.height
-        x_coordinate = self.margin + (x_increment * (cell[0] - 1))
-        y_coordinate = self.margin + (y_increment * (cell[1] - 1))
+        x_coordinate = self.margin + (x_increment * (cell[0]))
+        y_coordinate = self.margin + (y_increment * (cell[1]))
         return pygame.Rect(x_coordinate, y_coordinate, x_increment, y_increment)
 
     def setup_entities(self, entityAdapter: EntitiesAdapter):
         player = entityAdapter.makePlayerImage()
         mazeUi.place_player(player)
         red_ghost = entityAdapter.makeRedGhostImage()
-        mazeUi.place_element(red_ghost, 1, 1)
+        mazeUi.place_element(red_ghost, 0, 0)
         yellow_ghost = entityAdapter.makeYellowGhostImage()
-        mazeUi.place_element(yellow_ghost, 1, self.height)
+        mazeUi.place_element(yellow_ghost, 0, self.height - 1)
         blue_ghost = entityAdapter.makeBlueGhostImage()
-        mazeUi.place_element(blue_ghost, self.width, 1)
+        mazeUi.place_element(blue_ghost, self.width - 1, 0)
         pink_ghost = entityAdapter.makePinkGhostImage()
-        mazeUi.place_element(pink_ghost, self.width, self.height)
+        mazeUi.place_element(pink_ghost, self.width - 1, self.height - 1)
 
     def event_loop(self):
         clock = pygame.time.Clock()
