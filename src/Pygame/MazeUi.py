@@ -186,6 +186,13 @@ class MazeUi:
                     else:
                         ghost.catch_player(player_pos, self.can_move)
                 time_counter -= movement_interval
+            self.screen.fill("black")
+            self.makeMaze(self.width, self.height)
+            self.place_element(self.player.image,
+                               self.player.x, self.player.y)
+            for ghost in self.ghosts:
+                self.place_element(ghost.image,
+                                   ghost.x, ghost.y)
             pygame.display.flip()
         pygame.quit()
 
