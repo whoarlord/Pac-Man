@@ -1,4 +1,6 @@
-class MovementEntity:
+from pygame import Surface
+
+class MovementEntity():
     """Pac-Man entity: stores its position.
 
     The position is stored as (x, y), where x is the column and y
@@ -8,11 +10,15 @@ class MovementEntity:
     done outside, and these methods are called when needed.
     """
 
-    def __init__(self, x: int, y: int) -> None:
+    def __init__(self, x: int, y: int, image: Surface) -> None:
         """Create an entity at position (x, y)."""
 
         self.x = x
         self.y = y
+        self.image = image
+
+    def set_image(self, image: Surface):
+        self.image = image
 
     def move_up(self) -> None:
         """Move the entity one cell up."""

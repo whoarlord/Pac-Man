@@ -1,4 +1,4 @@
-from src.Entities.Factories import EntityFactory
-from src.Entities.ghost import Ghost
+from .Entities import EntityFactory, Ghost, Player
+from .Pygame import MazeUi, EntitiesAdapter
 
-__all__ = ['EntityFactory', 'Ghost']
+__all__ = ['EntityFactory', 'Ghost', 'Player', 'MazeUi', 'EntitiesAdapter']

@@ -1,6 +1,7 @@
-from src.Entities.ghost import Ghost
-from src.Entities.player import Player
-from src.Entities.pacgums import Pacgum
+from src.Entities.Ghost import Ghost
+from src.Entities.Player import Player
+from src.Entities.Pacgums import Pacgum
+from pygame import Surface
 
 
 class EntityFactory:
@@ -12,15 +13,16 @@ class EntityFactory:
     methods.
     """
 
-    def _create_player(self, x: int, y: int) -> Player:
+    def create_player(self, x: int, y: int, image: Surface) -> Player:
         """Create a Player at position (x, y)."""
 
-        return Player(x, y)
+        return Player(x, y, image)
 
-    def _create_ghost(self, x: int, y: int, color: Ghost.GhostColor) -> Ghost:
+    def create_ghost(self, x: int, y: int, image: Surface,
+                     color: Ghost.GhostColor) -> Ghost:
         """Create a Ghost at position (x, y)."""
 
-        return Ghost(x, y, color)
+        return Ghost(x, y, image, color)
 
     def _create_pacgum(self, x: int, y: int, is_super: bool) -> Pacgum:
         """Create a Pacgum at position (x, y).
@@ -47,8 +49,8 @@ class EntityFactory:
         list keeps the same order as the positions it was created from.
         """
 
-        player_x, player_y = player_pos
-        player = self._create_player(player_x, player_y)
+        """ player_x, player_y = player_pos
+        player = self.create_player(player_x, player_y)
 
         ghosts: list[Ghost] = []
         ghost_colors = [
@@ -61,8 +63,8 @@ class EntityFactory:
             if (len(ghost_colors) <= 0):
                 break
             ghost_x, ghost_y = ghost_pos
-            ghost = self._create_ghost(ghost_x, ghost_y, ghost_colors.pop())
-            ghosts.append(ghost)
+            ghost = self.create_ghost(ghost_x, ghost_y, ghost_colors.pop())
+            ghosts.append(ghost) """
 
         pacgums: list[Pacgum] = []
         for pacgum_pos in pacgums_pos:
