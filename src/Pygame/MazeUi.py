@@ -136,8 +136,8 @@ class MazeUi:
                        entityFactory: EntityFactory):
         player = entityAdapter.makePlayerImage()
         self.place_player(player)
-        self.player = entityFactory.create_player((self.width - 1) / 2,
-                                                  (self.height - 1) / 2,
+        self.player = entityFactory.create_player(int((self.width - 1) / 2),
+                                                  int((self.height - 1) / 2),
                                                   player)
 
         red_ghost = entityAdapter.makeRedGhostImage()
@@ -186,7 +186,6 @@ class MazeUi:
                     else:
                         ghost.catch_player(player_pos, self.can_move)
                 time_counter -= movement_interval
-            self.screen.fill("black")
             pygame.display.flip()
         pygame.quit()
 
