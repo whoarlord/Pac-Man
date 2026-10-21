@@ -1,4 +1,4 @@
-from src.movement_entity import MovementEntity
+from src.Entities.movement_entity import MovementEntity
 
 
 class Player(MovementEntity):
