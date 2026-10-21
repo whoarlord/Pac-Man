@@ -1,4 +1,5 @@
 from pygame import Surface
+from typing import Callable
 
 class MovementEntity():
     """Pac-Man entity: stores its position.
@@ -10,12 +11,15 @@ class MovementEntity():
     done outside, and these methods are called when needed.
     """
 
-    def __init__(self, x: int, y: int, image: Surface) -> None:
+    def __init__(self, x: int, y: int, image: Surface,
+                 can_move: Callable[
+                     [tuple[int, int], tuple[int, int]], bool]) -> None:
         """Create an entity at position (x, y)."""
 
         self.x = x
         self.y = y
         self.image = image
+        self.can_move = can_move
 
     def set_image(self, image: Surface):
         self.image = image
@@ -39,6 +43,22 @@ class MovementEntity():
         """Move the entity one cell to the left."""
 
         self.x = self.x - 1
+
+    def try_move_up(self) -> None:
+        if (self.can_move((self.x, self.y), self.next_pos_up())):
+            self.move_up()
+
+    def try_move_down(self) -> None:
+        if (self.can_move((self.x, self.y), self.next_pos_down())):
+            self.move_down()
+
+    def try_move_left(self) -> None:
+        if (self.can_move((self.x, self.y), self.next_pos_left())):
+            self.move_left()
+
+    def try_move_right(self) -> None:
+        if (self.can_move((self.x, self.y), self.next_pos_right())):
+            self.move_right()
 
     def next_pos_up(self) -> tuple[int, int]:
         """Return the (x, y) cell the entity would reach by moving up.

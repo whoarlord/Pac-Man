@@ -21,18 +21,18 @@ class Ghost(MovementEntity):
         PINK = 'pink'
 
     def __init__(self, x: int, y: int, image: Surface | None,
+                 can_move: Callable[
+                     [tuple[int, int], tuple[int, int]], bool],
                  color: GhostColor) -> None:
         """Create a ghost at position (x, y)."""
 
-        super().__init__(x, y, image)
+        super().__init__(x, y, image, can_move)
         self.color = color
 
     def set_image(self, image: Surface):
         self.image = image
 
-    def _get_neighbors(self, cell: tuple[int, int],
-                       can_move: Callable[[tuple[int, int], tuple[int, int]],
-                                          bool]) -> list[tuple[int, int]]:
+    def _get_neighbors(self, cell: tuple[int, int]):
         """Return the walkable cells next to cell.
 
         The cells are checked in the order up, down, left, right, and the
@@ -48,13 +48,11 @@ class Ghost(MovementEntity):
         candidates = [up, down, left, right]
         result = []
         for candidate in candidates:
-            if can_move(cell, candidate):
+            if self.can_move(cell, candidate):
                 result.append(candidate)
         return result
 
-    def _get_distances(self, start: tuple[int, int],
-                       can_move: Callable[[tuple[int, int], tuple[int, int]],
-                                          bool]) -> dict[tuple[int, int], int]:
+    def _get_distances(self, start: tuple[int, int]):
         """Return the number of steps from start to every reachable cell.
 
         It uses BFS: cells are explored in rings, first the ones 1 step
@@ -69,16 +67,14 @@ class Ghost(MovementEntity):
         queue = deque([start])
         while queue:
             current = queue.popleft()
-            for neighbor in self._get_neighbors(current, can_move):
+            for neighbor in self._get_neighbors(current):
                 if neighbor not in distances:
                     # Only a cell seen for the first time gets a distance.
                     distances[neighbor] = distances[current] + 1
                     queue.append(neighbor)
         return distances
 
-    def _choose_cell(self, player_pos: tuple[int, int],
-                     can_move: Callable[[tuple[int, int], tuple[int, int]],
-                                        bool], chase: bool) -> tuple[int, int]:
+    def _choose_cell(self, player_pos: tuple[int, int], chase: bool):
         """Return the neighbouring cell the ghost should move to.
 
         It computes the distance from player_pos to every cell and looks
@@ -91,8 +87,8 @@ class Ghost(MovementEntity):
         all of them can be reached from player_pos.
         """
 
-        distances = self._get_distances(player_pos, can_move)
-        neighbors = self._get_neighbors((self.x, self.y), can_move)
+        distances = self._get_distances(player_pos)
+        neighbors = self._get_neighbors((self.x, self.y))
         best = neighbors[0]
         for cell in neighbors:
             # Strict < and > keep the first cell when there is a tie.
@@ -123,21 +119,17 @@ class Ghost(MovementEntity):
     # catch_player and run_from_player move the ghost, as they do now, or
     # return the direction instead.
 
-    def catch_player(self, player_pos: tuple[int, int],
-                     can_move: Callable[[tuple[int, int], tuple[int, int]],
-                                        bool]) -> None:
+    def catch_player(self, player_pos: tuple[int, int]) -> None:
         """Move the ghost one cell along the shortest path to the player.
 
         player_pos is the player's position as (x, y). is_walkable says
         whether a cell can be stepped on.
         """
 
-        cell = self._choose_cell(player_pos, can_move, True)
+        cell = self._choose_cell(player_pos, True)
         self._move_to(cell)
 
-    def run_from_player(self, player_pos: tuple[int, int],
-                        can_move: Callable[[tuple[int, int], tuple[int, int]],
-                                           bool]) -> None:
+    def run_from_player(self, player_pos: tuple[int, int]) -> None:
         """Move the ghost one cell away from the player.
 
         It goes to the neighbouring cell with the longest path to
@@ -145,7 +137,7 @@ class Ghost(MovementEntity):
         be stepped on.
         """
 
-        cell = self._choose_cell(player_pos, can_move, False)
+        cell = self._choose_cell(player_pos, False)
         self._move_to(cell)
 
 
