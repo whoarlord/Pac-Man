@@ -138,53 +138,68 @@ class MazeUi:
         self.place_player(player)
         self.player = entityFactory.create_player(int((self.width - 1) / 2),
                                                   int((self.height - 1) / 2),
-                                                  player)
+                                                  player, self.can_move)
 
         red_ghost = entityAdapter.makeRedGhostImage()
         self.place_element(red_ghost, 0, 0)
         self.ghosts.append(
-            entityFactory.create_ghost(0, 0, red_ghost, Ghost.GhostColor.RED)
+            entityFactory.create_ghost(0, 0, red_ghost, self.can_move, Ghost.GhostColor.RED)
         )
 
         yellow_ghost = entityAdapter.makeYellowGhostImage()
         self.place_element(yellow_ghost, 0, self.height - 1)
         self.ghosts.append(
             entityFactory.create_ghost(0, self.height - 1, yellow_ghost,
-                                       Ghost.GhostColor.YELLOW)
+                                       self.can_move, Ghost.GhostColor.YELLOW)
         )
 
         blue_ghost = entityAdapter.makeBlueGhostImage()
         self.place_element(blue_ghost, self.width - 1, 0)
         self.ghosts.append(
             entityFactory.create_ghost(self.width - 1, 0, blue_ghost,
-                                       Ghost.GhostColor.BLUE)
+                                       self.can_move, Ghost.GhostColor.BLUE)
         )
 
         pink_ghost = entityAdapter.makePinkGhostImage()
         self.place_element(pink_ghost, self.width - 1, self.height - 1)
         self.ghosts.append(
-            entityFactory.create_ghost(self.width - 1, self.height - 1, 
-                                       pink_ghost, Ghost.GhostColor.PINK)
+            entityFactory.create_ghost(self.width - 1, self.height - 1,
+                                       pink_ghost, self.can_move,
+                                       Ghost.GhostColor.PINK)
         )
+
+    def bind_events(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    self.player.try_move_left()
+                elif event.key == pygame.K_RIGHT:
+                    self.player.try_move_right()
+                elif event.key == pygame.K_UP:
+                    self.player.try_move_up()
+                elif event.key == pygame.K_DOWN:
+                    self.player.try_move_down()
+                elif event.key == pygame.K_c:
+                    self.player.power_up()
 
     def event_loop(self):
         clock = pygame.time.Clock()
-        running = True
         movement_interval = 300
         time_counter = 0
-        while running:
+        self.running = True
+        while self.running:
             dt = clock.tick(60)
             time_counter += dt
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
+            self.bind_events()
             if time_counter >= movement_interval:
                 player_pos = (self.player.x, self.player.y)
                 for ghost in self.ghosts:
                     if self.player.is_powered_up:
-                        ghost.run_from_player(player_pos, self.can_move)
+                        ghost.run_from_player(player_pos)
                     else:
-                        ghost.catch_player(player_pos, self.can_move)
+                        ghost.catch_player(player_pos)
                 time_counter -= movement_interval
             self.screen.fill("black")
             self.makeMaze(self.width, self.height)

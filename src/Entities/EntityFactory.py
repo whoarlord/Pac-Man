@@ -2,6 +2,7 @@ from src.Entities.Ghost import Ghost
 from src.Entities.Player import Player
 from src.Entities.Pacgums import Pacgum
 from pygame import Surface
+from typing import Callable
 
 
 class EntityFactory:
@@ -13,16 +14,20 @@ class EntityFactory:
     methods.
     """
 
-    def create_player(self, x: int, y: int, image: Surface) -> Player:
+    def create_player(self, x: int, y: int, image: Surface,
+                      can_move: Callable[[tuple[int, int],
+                                          tuple[int, int]], bool]) -> Player:
         """Create a Player at position (x, y)."""
 
-        return Player(x, y, image)
+        return Player(x, y, image, can_move)
 
     def create_ghost(self, x: int, y: int, image: Surface,
+                     can_move: Callable[
+                         [tuple[int, int],tuple[int, int]], bool],
                      color: Ghost.GhostColor) -> Ghost:
         """Create a Ghost at position (x, y)."""
 
-        return Ghost(x, y, image, color)
+        return Ghost(x, y, image, can_move, color)
 
     def _create_pacgum(self, x: int, y: int, is_super: bool) -> Pacgum:
         """Create a Pacgum at position (x, y).
