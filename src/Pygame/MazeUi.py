@@ -107,7 +107,30 @@ class MazeUi:
         y_increment = (self.window_height - self.margin) / self.height
         x_coordinate = self.margin + (x_increment * (cell[0]))
         y_coordinate = self.margin + (y_increment * (cell[1]))
-        return pygame.Rect(x_coordinate, y_coordinate, x_increment, y_increment)
+        return pygame.Rect(x_coordinate, y_coordinate, x_increment,
+                           y_increment)
+
+    def can_move(self, origin: tuple[int, int],
+                 target: tuple[int, int]) -> bool:
+        x_target, y_target = target
+        if (x_target < 0 or x_target >= self.width or y_target < 0
+                or y_target >= self.height):
+            return False
+        x_origin, y_origin = origin
+        actual_cell = self.maze.maze[y_origin][x_origin]
+        dx = x_target - x_origin
+        dy = y_target - y_origin
+        if dx == 0 and dy == -1:
+            wall = 1
+        elif dx == 1 and dy == 0:
+            wall = 2
+        elif dx == 0 and dy == 1:
+            wall = 4
+        elif dx == -1 and dy == 0:
+            wall = 8
+        else:
+            return False
+        return (actual_cell & wall) == 0
 
     def setup_entities(self, entityAdapter: EntitiesAdapter,
                        entityFactory: EntityFactory):
@@ -147,12 +170,24 @@ class MazeUi:
     def event_loop(self):
         clock = pygame.time.Clock()
         running = True
+        movement_interval = 300
+        time_counter = 0
         while running:
+            dt = clock.tick(60)
+            time_counter += dt
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+            if time_counter >= movement_interval:
+                player_pos = (self.player.x, self.player.y)
+                for ghost in self.ghosts:
+                    if self.player.is_powered_up:
+                        ghost.run_from_player(player_pos, self.can_move)
+                    else:
+                        ghost.catch_player(player_pos, self.can_move)
+                time_counter -= movement_interval
+            self.screen.fill("black")
             pygame.display.flip()
-            clock.tick(60)
         pygame.quit()
 
 
@@ -160,6 +195,10 @@ if __name__ == '__main__':
     # pygame setup
     mazeUi = MazeUi(20, 20)
     entityAdapter = EntitiesAdapter(mazeUi.cell_size)
-    mazeUi.makeMaze(20, 20)
-    mazeUi.setup_entities(entityAdapter)
+    mazeUi.player = Player(10, 10)
+    mazeUi.ghosts = [Ghost(0, 0, Ghost.GhostColor.RED)]
+    mazeUi.player_image = entityAdapter.makePlayerImage()
+    mazeUi.ghost_images = {
+        Ghost.GhostColor.RED: entityAdapter.makeRedGhostImage()
+    }
     mazeUi.event_loop()
