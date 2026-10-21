@@ -1,6 +1,6 @@
-from src.ghost import Ghost
-from src.player import Player
-from src.pacgums import Pacgum
+from src.Entities.ghost import Ghost
+from src.Entities.player import Player
+from src.Entities.pacgums import Pacgum
 
 
 class EntityFactory:

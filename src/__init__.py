@@ -1,4 +1,4 @@
-from src.Factories import EntityFactory
-from src.ghost import Ghost
+from src.Entities.Factories import EntityFactory
+from src.Entities.ghost import Ghost
 
 __all__ = ['EntityFactory', 'Ghost']
