@@ -1,4 +1,5 @@
-from src.Entities.movement_entity import MovementEntity
+from src.Entities.MovementEntity import MovementEntity
+from pygame import Surface
 
 
 class Player(MovementEntity):
@@ -8,10 +9,10 @@ class Player(MovementEntity):
     POINTS_PER_SUPER_PACGUM = 50
     POINTS_PER_GHOST = 200
 
-    def __init__(self, x: int, y: int) -> None:
+    def __init__(self, x: int, y: int, image: Surface | None) -> None:
         """Create player with position (x, y), score 0 and not powered up."""
 
-        super().__init__(x, y)
+        super().__init__(x, y, image)
         self.score = 0
         self.is_powered_up = False
 

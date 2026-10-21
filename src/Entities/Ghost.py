@@ -1,7 +1,8 @@
-from src.Entities.movement_entity import MovementEntity
+from src.Entities.MovementEntity import MovementEntity
 from typing import Callable
 from collections import deque
 from enum import Enum
+from pygame import Surface
 
 
 class Ghost(MovementEntity):
@@ -19,11 +20,15 @@ class Ghost(MovementEntity):
         BLUE = 'blue'
         PINK = 'pink'
 
-    def __init__(self, x: int, y: int, color: GhostColor) -> None:
+    def __init__(self, x: int, y: int, image: Surface | None,
+                 color: GhostColor) -> None:
         """Create a ghost at position (x, y)."""
 
-        super().__init__(x, y)
+        super().__init__(x, y, image)
         self.color = color
+
+    def set_image(self, image: Surface):
+        self.image = image
 
     def _get_neighbors(self, cell: tuple[int, int],
                        can_move: Callable[[tuple[int, int], tuple[int, int]],

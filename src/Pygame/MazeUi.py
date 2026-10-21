@@ -1,6 +1,7 @@
 import pygame
 from mazegenerator import MazeGenerator
-from EntitiesAdapter import EntitiesAdapter
+from . import EntitiesAdapter
+from .. import EntityFactory, Ghost
 from typing import Tuple
 
 
@@ -106,17 +107,30 @@ class MazeUi:
         y_coordinate = self.margin + (y_increment * (cell[1]))
         return pygame.Rect(x_coordinate, y_coordinate, x_increment, y_increment)
 
-    def setup_entities(self, entityAdapter: EntitiesAdapter):
+    def setup_entities(self, entityAdapter: EntitiesAdapter,
+                       entityFactory: EntityFactory):
         player = entityAdapter.makePlayerImage()
-        mazeUi.place_player(player)
+        self.place_player(player)
+        entityFactory.create_player((self.width - 1) / 2, (self.height - 1) / 2, player)
+
         red_ghost = entityAdapter.makeRedGhostImage()
-        mazeUi.place_element(red_ghost, 0, 0)
+        self.place_element(red_ghost, 0, 0)
+        entityFactory.create_ghost(0, 0, red_ghost, Ghost.GhostColor.RED)
+
         yellow_ghost = entityAdapter.makeYellowGhostImage()
-        mazeUi.place_element(yellow_ghost, 0, self.height - 1)
+        self.place_element(yellow_ghost, 0, self.height - 1)
+        entityFactory.create_ghost(0, self.height - 1, red_ghost,
+                                   Ghost.GhostColor.YELLOW)
+
         blue_ghost = entityAdapter.makeBlueGhostImage()
-        mazeUi.place_element(blue_ghost, self.width - 1, 0)
+        self.place_element(blue_ghost, self.width - 1, 0)
+        entityFactory.create_ghost(self.width - 1, 0, red_ghost,
+                                   Ghost.GhostColor.BLUE)
+
         pink_ghost = entityAdapter.makePinkGhostImage()
-        mazeUi.place_element(pink_ghost, self.width - 1, self.height - 1)
+        self.place_element(pink_ghost, self.width - 1, self.height - 1)
+        entityFactory.create_ghost(self.width - 1, self.height - 1, red_ghost,
+                                   Ghost.GhostColor.PINK)
 
     def event_loop(self):
         clock = pygame.time.Clock()

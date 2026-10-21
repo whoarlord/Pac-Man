@@ -8,7 +8,7 @@ PIP=$(VIRTUALENV)/bin/pip
 DEPENDENCIES=requirements.txt
 MAZEPROGRAM=mazegenerator-2.1.0-py3-none-any.whl
 
-MAIN=./src/Pygame/MazeUi.py
+MAIN= -m src
 
 TOCLEAN=.mypy_cache
 
