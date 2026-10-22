@@ -15,8 +15,8 @@ if __name__ == '__main__':
     parser = ConfigParser(config_path)
 
     levels = parser.config.levels
-    width = levels[0].width if levels else 20
-    height = levels[0].height if levels else 20
+    width = levels[0].width
+    height = levels[0].height
 
     entityFactory = EntityFactory()
     mazeUi = MazeUi(width, height)

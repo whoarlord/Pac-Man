@@ -1,4 +1,4 @@
-CONFIG=config.txt
+CONFIG=config.json
 DEBUGGER= -m pdb
 
 VIRTUALENV= PacEnv
@@ -20,7 +20,7 @@ install: $(VIRTUALENV)
 	$(PIP) install -r $(DEPENDENCIES)
 
 run: install
-	$(PYTHON) $(MAIN)
+	$(PYTHON) $(MAIN) $(CONFIG)
 
 debug: $(VIRTUALENV)
 	$(PYTHON) $(DEBUGGER) $(MAIN) </dev/tty
