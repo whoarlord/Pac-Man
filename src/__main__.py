@@ -4,10 +4,14 @@ from . import EntityFactory, MazeUi, EntitiesAdapter
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print("Usage: python3 -m src <config.json>")
+        print("Usage: python3 -m src <config.json>", file=sys.stderr)
         sys.exit(1)
 
     config_path = sys.argv[1]
+    if not config_path.lower().endswith(".json"):
+        print(f"Received: '{config_path}', expected a '.json' file",
+              file=sys.stderr)
+        sys.exit(1)
     parser = ConfigParser(config_path)
 
     levels = parser.config.levels
