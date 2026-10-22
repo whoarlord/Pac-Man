@@ -1,28 +1,37 @@
 import os
 import json
-from typing import Any, List, ClassVar
+from typing import Any, ClassVar
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
 
 class LevelConfig(BaseModel):
     """Configuration model for a single game level dimensions."""
 
-    # ge=5: "Greater than or equal to 5" (el ancho y alto mínimo son 5)
-    width: int = Field(default=20, ge=5)
-    height: int = Field(default=20, ge=5)
+    width: int = Field(default=20, ge=5, le=100)
+    height: int = Field(default=20, ge=5, le=100)
 
     @field_validator("width", "height", mode="before")
     @classmethod
-    def validate_dimensions(cls, v: Any) -> int:
+    def validate_dimensions(cls, v: Any, info: Any) -> int:
         """Ensure dimensions are valid positive integers, clamping if needed.
         """
 
+        field_name = (info.field_name if hasattr(info, 'field_name')
+                      else "dimension")
         try:
             val = int(v)
-            # Clamping: acotamos el valor para que nunca sea
-            # inferior a 5 de forma segura
-            return max(5, val)
+            if val < 5:
+                print(f"Warning: {field_name} '{v}' is below minimum (5). "
+                      f"Clamping to 5.")
+                return 5
+            if val > 100:
+                print(f"Warning: {field_name} '{v}' exceeds maximum (100). "
+                      f"Clamping to 100.")
+                return 100
+            return val
         except (ValueError, TypeError):
+            print(f"Invalid type for {field_name}: {v!r}. "
+                  f"Using default value (20).")
             return 20
 
 
@@ -37,19 +46,15 @@ class GameConfigModel(BaseModel):
     # default_factory con lambda: evita compartir referencias de listas
     # en memoria y genera una lista nueva con un nivel por defecto si no
     # viene especificado en el JSON.
-    levels: List[LevelConfig] = Field(
+    levels: list[LevelConfig] = Field(
         default_factory=lambda: [
             LevelConfig() for _ in range(GameConfigModel.MIN_LEVELS)])
-    # gt=0: "Greater than 0" (estrictamente mayor que 0,
-    # no se permiten vidas <= 0)
-    lives: int = Field(default=3, gt=0)
-    # ge=0: "Greater than or equal to 0" (no se permiten cantidades negativas)
+    lives: int = Field(default=3, gt=0, le=10)
     pacgum: int = Field(default=42, gt=0)
     points_per_pacgum: int = Field(default=10, gt=0)
     points_per_super_pacgum: int = Field(default=50, gt=0)
     points_per_ghost: int = Field(default=200, gt=0)
     seed: int = 42
-    # gt=0: El tiempo máximo por nivel debe ser estrictamente mayor que 0
     level_max_time: int = Field(default=90, gt=0)
 
     @field_validator("levels", mode="after")
@@ -59,8 +64,11 @@ class GameConfigModel(BaseModel):
 
         levels = list(v)
         if len(levels) < cls.MIN_LEVELS:
-            print(f"Only {len(levels)} level(s) in the configuration: "
-                  f"adding default levels up to {cls.MIN_LEVELS}.")
+            print(
+                f"Notice: Only {len(levels)} level(s) provided in "
+                f"configuration. Padding with default levels up "
+                f"to {cls.MIN_LEVELS}."
+            )
             while len(levels) < cls.MIN_LEVELS:
                 levels.append(LevelConfig())
         return levels
@@ -78,8 +86,6 @@ class ConfigParser:
 
         self.filepath = filepath
         self.config = self._load_and_validate_configuration()
-
-    _load_configuration = None
 
     def _build_model(self, data: dict[str, Any]) -> GameConfigModel:
         """Build the configuration, dropping the keys with invalid values.
@@ -125,11 +131,14 @@ class ConfigParser:
             with open(self.filepath, "r", encoding='utf-8') as f:
                 lines = f.readlines()
 
-            # Filtrar líneas vacías y comentarios que empiezan por '#'
+            # Sustituir líneas de comentarios por líneas vacías para mantener
+            # la coherencia con las líneas del archivo JSON original.
             clean_lines = []
             for line in lines:
                 stripped = line.strip()
-                if stripped and not stripped.startswith('#'):
+                if stripped.startswith('#'):
+                    clean_lines.append("\n")
+                else:
                     clean_lines.append(line)
 
             json_str = "".join(clean_lines)
@@ -144,9 +153,9 @@ class ConfigParser:
             # encarga de los valores inválidos clave por clave.
             return self._build_model(data)
 
-        except (json.JSONDecodeError, ValidationError) as e:
-            print(f"Error in configuration file: {e}. "
-                  f"Using safe default values.")
+        except json.JSONDecodeError as e:
+            print(f"Syntax error in configuration file: {e}. "
+                  f"Using default values.")
             return GameConfigModel()
         except Exception as e:
             print(f"Unexpected error reading config: {e}. "
