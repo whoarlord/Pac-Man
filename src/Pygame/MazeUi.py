@@ -198,14 +198,21 @@ class MazeUi:
         occupied = set(corners)
         occupied.add(center)
 
-        def is_inside(cell: tuple[int, int]) -> bool:
+        def is_walkable(cell: tuple[int, int]) -> bool:
             x, y = cell
-            return 0 <= x < self.width and 0 <= y < self.height
+            if not (0 <= x < self.width and 0 <= y < self.height):
+                return False
+            return self.maze.maze[y][x] != 15
 
-        free_cells = self.width * self.height - len(occupied)
+        free_cells = 0
+        for x in range(self.width):
+            for y in range(self.height):
+                cell = (x, y)
+                if is_walkable(cell) and cell not in occupied:
+                    free_cells += 1
         amount = min(self.config.pacgum, free_cells)
         positions = Pacgum.get_random_positions(self.width, self.height,
-                                                amount, is_inside, occupied)
+                                                amount, is_walkable, occupied)
 
         for x, y in corners:
             self.super_pacgums.append(entityFactory.create_pacgum(x, y, True))
@@ -221,6 +228,29 @@ class MazeUi:
     def reset_player_position(self) -> None:
         self.player.x = int((self.width - 1) / 2)
         self.player.y = int((self.height - 1) / 2)
+
+    def draw_pacgums(self) -> None:
+        color = (255, 184, 174)
+        for pacgum in self.pacgums:
+            rect = self.calculate_rect_for_cell((pacgum.x, pacgum.y))
+            radius = max(1, int(min(rect.width, rect.height) / 10))
+            pygame.draw.circle(self.screen, color, rect.center, radius)
+        for pacgum in self.super_pacgums:
+            rect = self.calculate_rect_for_cell((pacgum.x, pacgum.y))
+            radius = max(1, int(min(rect.width, rect.height) / 3))
+            pygame.draw.circle(self.screen, color, rect.center, radius)
+
+    def eat_pacgums(self) -> None:
+        for pacgum in list(self.pacgums):
+            if pacgum.x == self.player.x and pacgum.y == self.player.y:
+                self.pacgums.remove(pacgum)
+                self.player.add_pacgum_points()
+                print(self.player.score)
+        for pacgum in list(self.super_pacgums):
+            if pacgum.x == self.player.x and pacgum.y == self.player.y:
+                self.super_pacgums.remove(pacgum)
+                self.player.add_super_pacgum_points()
+                self.player.power_up()
 
     def bind_events(self):
         for event in pygame.event.get():
@@ -255,6 +285,7 @@ class MazeUi:
             dt = clock.tick(60)
             time_counter += dt
             self.bind_events()
+            self.eat_pacgums()
             if time_counter >= movement_interval:
                 player_pos = (self.player.x, self.player.y)
                 for ghost in self.ghosts:
@@ -265,6 +296,7 @@ class MazeUi:
                 time_counter -= movement_interval
             self.screen.fill("black")
             self.makeMaze(self.width, self.height)
+            self.draw_pacgums()
             self.place_element(self.player.image,
                                self.player.x, self.player.y)
             for ghost in self.ghosts:
