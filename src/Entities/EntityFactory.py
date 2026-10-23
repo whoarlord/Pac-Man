@@ -2,7 +2,7 @@ from src.Entities.Ghost import Ghost
 from src.Entities.Player import Player
 from src.Entities.Pacgums import Pacgum
 from pygame import Surface
-from typing import Callable
+from typing import Callable, Tuple
 
 
 class EntityFactory:
@@ -14,24 +14,30 @@ class EntityFactory:
     methods.
     """
 
-    def create_player(self, x: int, y: int, image: Surface,
+    def create_player(self, coordinates: Tuple[int, int],
+                      pixels: Tuple[int, int], image: Surface,
                       can_move: Callable[[tuple[int, int],
                                           tuple[int, int]], bool],
                       points_per_pacgum: int, points_per_super_pacgum: int,
                       points_per_ghost: int, lives: int) -> Player:
         """Create a Player at position (x, y)."""
 
-        return Player(x, y, image, can_move, points_per_pacgum,
+        return Player(coordinates[0], coordinates[1],
+                      pixels[0], pixels[1],
+                      image, can_move, points_per_pacgum,
                       points_per_super_pacgum, points_per_ghost,
                       lives)
 
-    def create_ghost(self, x: int, y: int, image: Surface,
+    def create_ghost(self, coordinates: Tuple[int, int],
+                     pixels: Tuple[int, int], image: Surface,
                      can_move: Callable[
                          [tuple[int, int], tuple[int, int]], bool],
                      color: Ghost.GhostColor) -> Ghost:
         """Create a Ghost at position (x, y)."""
 
-        return Ghost(x, y, image, can_move, color)
+        return Ghost(coordinates[0], coordinates[1],
+                     pixels[0], pixels[1],
+                     image, can_move, color)
 
     def create_pacgum(self, x: int, y: int, is_super: bool) -> Pacgum:
         """Create a Pacgum at position (x, y).

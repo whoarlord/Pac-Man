@@ -6,14 +6,16 @@ from typing import Callable
 class Player(MovementEntity):
     """Pac-Man player: adds score and power-up state to MovementEntity."""
 
-    def __init__(self, x: int, y: int, image: Surface | None,
+    def __init__(self, x: int, y: int,
+                 x_pixel: int, y_pixel: int,
+                 image: Surface | None,
                  can_move: Callable[
                      [tuple[int, int], tuple[int, int]], bool],
                  points_per_pacgum: int, points_per_super_pacgum: int,
                  points_per_ghost: int, lives: int) -> None:
         """Create player with position (x, y), score 0 and not powered up."""
 
-        super().__init__(x, y, image, can_move)
+        super().__init__(x, y, x_pixel, y_pixel, image, can_move)
         self.score = 0
         self.is_powered_up = False
         self.points_per_pacgum = points_per_pacgum
