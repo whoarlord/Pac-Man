@@ -2,14 +2,18 @@ import pygame
 from mazegenerator import MazeGenerator
 from . import EntitiesAdapter
 from .. import EntityFactory, Ghost, Player
+from ..Entities.Pacgums import Pacgum
+from ..Config.ConfigParser import GameConfigModel
 from typing import Tuple
 
 
 class MazeUi:
-    def __init__(self, width: int, height: int):
+    def __init__(self, config: GameConfigModel):
         pygame.init()
-        self.width = width
-        self.height = height
+        self.config = config
+        self.current_level = 0
+        self.width = config.levels[self.current_level].width
+        self.height = config.levels[self.current_level].height
         self.window_width = 1920
         self.window_height = 1080
         self.margin = 5
@@ -22,6 +26,15 @@ class MazeUi:
         self.screen.fill("black")
         self.player: Player | None = None
         self.ghosts: list[Ghost] = []
+        self.pacgums: list[Pacgum] = []
+        self.super_pacgums: list[Pacgum] = []
+
+    def load_level(self, level_index: int) -> None:
+        self.current_level = level_index
+        self.width = self.config.levels[self.current_level].width
+        self.height = self.config.levels[self.current_level].height
+        self.cell_size = self.calculate_cell_size()
+        self.initializeMaze()
 
     def calculate_cell_size(self):
         cell_width = (self.window_width - self.margin) / self.width
@@ -132,18 +145,27 @@ class MazeUi:
             return False
         return (actual_cell & wall) == 0
 
-    def setup_entities(self, entityAdapter: EntitiesAdapter,
-                       entityFactory: EntityFactory):
+    def setup_player(self, entityAdapter: EntitiesAdapter,
+                     entityFactory: EntityFactory) -> None:
         player = entityAdapter.makePlayerImage()
         self.place_player(player)
-        self.player = entityFactory.create_player(int((self.width - 1) / 2),
-                                                  int((self.height - 1) / 2),
-                                                  player, self.can_move)
+        self.player = (entityFactory.
+                       create_player(int((self.width - 1) / 2),
+                                     int((self.height - 1) / 2),
+                                     player, self.can_move,
+                                     self.config.points_per_pacgum,
+                                     self.config.points_per_super_pacgum,
+                                     self.config.points_per_ghost,
+                                     self.config.lives))
 
+    def setup_ghosts(self, entityAdapter: EntitiesAdapter,
+                     entityFactory: EntityFactory) -> None:
+        self.ghosts = []
         red_ghost = entityAdapter.makeRedGhostImage()
         self.place_element(red_ghost, 0, 0)
         self.ghosts.append(
-            entityFactory.create_ghost(0, 0, red_ghost, self.can_move, Ghost.GhostColor.RED)
+            entityFactory.create_ghost(0, 0, red_ghost, self.can_move,
+                                       Ghost.GhostColor.RED)
         )
 
         yellow_ghost = entityAdapter.makeYellowGhostImage()
@@ -168,6 +190,38 @@ class MazeUi:
                                        Ghost.GhostColor.PINK)
         )
 
+    def setup_pacgums(self, entityFactory: EntityFactory) -> None:
+        self.pacgums = []
+        self.super_pacgums = []
+        corners = Pacgum.get_corner_positions(self.width, self.height)
+        center = (int((self.width - 1) / 2), int((self.height - 1) / 2))
+        occupied = set(corners)
+        occupied.add(center)
+
+        def is_inside(cell: tuple[int, int]) -> bool:
+            x, y = cell
+            return 0 <= x < self.width and 0 <= y < self.height
+
+        free_cells = self.width * self.height - len(occupied)
+        amount = min(self.config.pacgum, free_cells)
+        positions = Pacgum.get_random_positions(self.width, self.height,
+                                                amount, is_inside, occupied)
+
+        for x, y in corners:
+            self.super_pacgums.append(entityFactory.create_pacgum(x, y, True))
+        for x, y in positions:
+            self.pacgums.append(entityFactory.create_pacgum(x, y, False))
+
+    def setup_entities(self, entityAdapter: EntitiesAdapter,
+                       entityFactory: EntityFactory) -> None:
+        self.setup_player(entityAdapter, entityFactory)
+        self.setup_ghosts(entityAdapter, entityFactory)
+        self.setup_pacgums(entityFactory)
+
+    def reset_player_position(self) -> None:
+        self.player.x = int((self.width - 1) / 2)
+        self.player.y = int((self.height - 1) / 2)
+
     def bind_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -183,6 +237,14 @@ class MazeUi:
                     self.player.try_move_down()
                 elif event.key == pygame.K_c:
                     self.player.power_up()
+                elif event.key == pygame.K_r:
+                    self.reset_player_position()
+                elif event.key == pygame.K_p:
+                    self.player.add_pacgum_points()
+                    print(self.player.score)
+                elif event.key == pygame.K_l:
+                    self.player.lose_life()
+                    print(self.player.lives)
 
     def event_loop(self):
         clock = pygame.time.Clock()
