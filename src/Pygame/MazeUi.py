@@ -300,11 +300,13 @@ class MazeUi:
     def draw_pacgums(self) -> None:
         color = (255, 184, 174)
         for pacgum in self.pacgums:
-            rect = self.calculate_rect_for_cell((pacgum.x, pacgum.y))
+            pixels = self.calculate_pixels_tuple((pacgum.x, pacgum.y))
+            rect = self.calculate_rect_for_cell(pixels)
             radius = max(1, int(min(rect.width, rect.height) / 10))
             pygame.draw.circle(self.screen, color, rect.center, radius)
         for pacgum in self.super_pacgums:
-            rect = self.calculate_rect_for_cell((pacgum.x, pacgum.y))
+            pixels = self.calculate_pixels_tuple((pacgum.x, pacgum.y))
+            rect = self.calculate_rect_for_cell(pixels)
             radius = max(1, int(min(rect.width, rect.height) / 3))
             pygame.draw.circle(self.screen, color, rect.center, radius)
 
