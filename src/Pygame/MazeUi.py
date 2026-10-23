@@ -117,7 +117,7 @@ class MazeUi:
                       coordinates: Tuple[int, int]):
         self.screen.blit(element, self.calculate_rect_for_cell(coordinates))
 
-    def calculate_rect_for_cell(self, cell: Tuple[int, int]):
+    def calculate_rect_for_cell(self, cell: Tuple[int, int]) -> pygame.Rect:
         x_increment = (self.window_width - self.margin) / self.width
         y_increment = (self.window_height - self.margin) / self.height
         return pygame.Rect(cell[0], cell[1], x_increment,
@@ -154,6 +154,7 @@ class MazeUi:
         for ghost in self.ghosts:
             self.place_element(ghost.image,
                                ghost.get_pixels())
+        self.check_collisions()
 
     def calculate_pixels_tuple(self, coordinates: Tuple[int, int]):
         x_increment = (self.window_width - self.margin) / self.width
@@ -323,16 +324,51 @@ class MazeUi:
                 self.player.power_up()
 
     def check_collisions(self) -> None:
+        width_c, height_c = self.cell_size
+
+        tolerance = 6
+
+        p_left = self.player.x_pixel + tolerance
+        p_right = self.player.x_pixel + width_c - tolerance
+        p_up = self.player.y_pixel + tolerance
+        p_down = self.player.y_pixel + height_c - tolerance
+
         for ghost in self.ghosts:
-            if ghost.x == self.player.x and ghost.y == self.player.y:
+            g_left = ghost.x_pixel + tolerance
+            g_right = ghost.x_pixel + width_c - tolerance
+            g_up = ghost.y_pixel + tolerance
+            g_down = ghost.y_pixel + height_c - tolerance
+
+            separated = (p_right < g_left or p_left > g_right or
+                         p_down < g_up or p_up > g_down)
+
+            if not separated:
                 if self.player.is_powered_up:
                     self.player.add_ghost_points()
                     ghost.respawn()
+                    px_ghost = self.calculate_pixels_tuple((ghost.x, ghost.y))
+                    ghost.set_pixels(px_ghost)
+                    ghost.set_is_moving(MovingDirection.NOT_MOVING)
                 else:
                     self.player.lose_life()
-                    self.reset_player_position()
-                    if self.player.lives == 0:
+                    print(f"¡Te han tocado! Vidas restantes: {self.
+                                                              player.lives}")
+
+                    if self.player.lives <= 0:
                         self.running = False
+                    else:
+                        self.reset_player_position()
+                        px_jugador = self.calculate_pixels_tuple(
+                            (self.player.x, self.player.y))
+                        self.player.set_pixels(px_jugador)
+                        self.player.set_is_moving(MovingDirection.NOT_MOVING)
+
+                        for ghost in self.ghosts:
+                            ghost.respawn()
+                            px_g = self.calculate_pixels_tuple((ghost.x,
+                                                                ghost.y))
+                            ghost.set_pixels(px_g)
+                            ghost.set_is_moving(MovingDirection.NOT_MOVING)
                     break
 
     def bind_events(self):
@@ -377,7 +413,6 @@ class MazeUi:
             dt = clock.tick(60)
             time_counter += dt
             self.bind_events()
-            self.check_collisions()
             self.eat_pacgums()
             if not self.pacgums:
                 self.next_level()
@@ -394,7 +429,6 @@ class MazeUi:
                         else:
                             ghost.catch_player(player_pos)
                 time_counter -= movement_interval
-                self.check_collisions()
             pygame.display.flip()
         pygame.quit()
 
