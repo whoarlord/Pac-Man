@@ -31,6 +31,8 @@ class MazeUi:
         self.super_pacgums: list[Pacgum] = []
         self.entity_factory = None
         self.entity_adapter = None
+        self.power_up_timer = 0
+        self.POWER_UP_DURATION = 7000
 
     def load_level(self, level_index: int) -> None:
         self.current_level = level_index
@@ -202,6 +204,7 @@ class MazeUi:
         self.player.set_image(self.entity_adapter.makePlayerImage())
         self.reset_player_position()
         self.player.power_down()
+        self.power_up_timer = 0
         self.setup_ghosts(self.entity_adapter, self.entity_factory)
         self.setup_pacgums(self.entity_factory)
 
@@ -297,6 +300,10 @@ class MazeUi:
     def reset_player_position(self) -> None:
         self.player.x = int((self.width - 1) / 2)
         self.player.y = int((self.height - 1) / 2)
+        px_jugador = self.calculate_pixels_tuple(
+            (self.player.x, self.player.y))
+        self.player.set_pixels(px_jugador)
+        self.player.set_is_moving(MovingDirection.NOT_MOVING)
 
     def draw_pacgums(self) -> None:
         color = (255, 184, 174)
@@ -316,12 +323,12 @@ class MazeUi:
             if pacgum.x == self.player.x and pacgum.y == self.player.y:
                 self.pacgums.remove(pacgum)
                 self.player.add_pacgum_points()
-                print(self.player.score)
         for pacgum in list(self.super_pacgums):
             if pacgum.x == self.player.x and pacgum.y == self.player.y:
                 self.super_pacgums.remove(pacgum)
                 self.player.add_super_pacgum_points()
                 self.player.power_up()
+                self.power_up_timer = 0
 
     def check_collisions(self) -> None:
         width_c, height_c = self.cell_size
@@ -351,17 +358,13 @@ class MazeUi:
                     ghost.set_is_moving(MovingDirection.NOT_MOVING)
                 else:
                     self.player.lose_life()
-                    print(f"¡Te han tocado! Vidas restantes: {self.
-                                                              player.lives}")
+                    lives = self.player.lives
+                    print(f"¡Te han tocado! Vidas restantes: {lives}")
 
                     if self.player.lives <= 0:
                         self.running = False
                     else:
                         self.reset_player_position()
-                        px_jugador = self.calculate_pixels_tuple(
-                            (self.player.x, self.player.y))
-                        self.player.set_pixels(px_jugador)
-                        self.player.set_is_moving(MovingDirection.NOT_MOVING)
 
                         for ghost in self.ghosts:
                             ghost.respawn()
@@ -412,6 +415,11 @@ class MazeUi:
             self.print_map()
             dt = clock.tick(60)
             time_counter += dt
+            if self.player.is_powered_up:
+                self.power_up_timer += dt
+                if self.power_up_timer >= self.POWER_UP_DURATION:
+                    self.player.power_down()
+                    self.power_up_timer = 0
             self.bind_events()
             self.eat_pacgums()
             if not self.pacgums:

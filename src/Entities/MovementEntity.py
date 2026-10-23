@@ -34,7 +34,7 @@ class MovementEntity():
         self.y_pixel = y_pixel
         self.image = image
         self.can_move = can_move
-        self.is_moving: MovingDirection = 0
+        self.is_moving = MovingDirection.NOT_MOVING
 
     def set_image(self, image: Surface):
         self.image = image
