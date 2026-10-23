@@ -20,13 +20,14 @@ class Ghost(MovementEntity):
         BLUE = 'blue'
         PINK = 'pink'
 
-    def __init__(self, x: int, y: int, image: Surface | None,
+    def __init__(self, x: int, y: int, x_pixel: int,
+                 y_pixel: int, image: Surface | None,
                  can_move: Callable[
                      [tuple[int, int], tuple[int, int]], bool],
                  color: GhostColor) -> None:
         """Create a ghost at position (x, y)."""
 
-        super().__init__(x, y, image, can_move)
+        super().__init__(x, y, x_pixel, y_pixel, image, can_move)
         self.color = color
 
     def set_image(self, image: Surface):

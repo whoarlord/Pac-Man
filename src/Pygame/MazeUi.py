@@ -1,7 +1,8 @@
 import pygame
 from mazegenerator import MazeGenerator
 from . import EntitiesAdapter
-from .. import EntityFactory, Ghost, Player
+from .. import (EntityFactory, Ghost, Player, MovementEntity,
+                MovingDirection)
 from typing import Tuple
 
 
@@ -95,19 +96,16 @@ class MazeUi:
     def place_player(self, player: pygame.Surface):
         x = int((self.width - 1) / 2)
         y = int((self.height - 1) / 2)
-        print(f"x: {x}")
-        print(f"y: {y}")
-        self.place_element(player, x, y)
+        self.place_element(player, self.calculate_pixels_tuple((x, y)))
 
-    def place_element(self, element: pygame.Surface, x: int, y: int):
-        self.screen.blit(element, self.calculate_rect_for_cell((x, y)))
+    def place_element(self, element: pygame.Surface,
+                      coordinates: Tuple[int, int]):
+        self.screen.blit(element, self.calculate_rect_for_cell(coordinates))
 
     def calculate_rect_for_cell(self, cell: Tuple[int, int]):
         x_increment = (self.window_width - self.margin) / self.width
         y_increment = (self.window_height - self.margin) / self.height
-        x_coordinate = self.margin + (x_increment * (cell[0]))
-        y_coordinate = self.margin + (y_increment * (cell[1]))
-        return pygame.Rect(x_coordinate, y_coordinate, x_increment,
+        return pygame.Rect(cell[0], cell[1], x_increment,
                            y_increment)
 
     def can_move(self, origin: tuple[int, int],
@@ -132,38 +130,95 @@ class MazeUi:
             return False
         return (actual_cell & wall) == 0
 
+    def print_map(self):
+        self.screen.fill("black")
+        self.makeMaze(self.width, self.height)
+        self.place_element(self.player.image,
+                           (self.player.get_pixels()))
+        for ghost in self.ghosts:
+            self.place_element(ghost.image,
+                               ghost.get_pixels())
+
+    def calculate_pixels_tuple(self, coordinates: Tuple[int, int]):
+        x_increment = (self.window_width - self.margin) / self.width
+        y_increment = (self.window_height - self.margin) / self.height
+        return (self.margin + int(x_increment * (coordinates[0])),
+                self.margin + int(y_increment * (coordinates[1])))
+
+    def calculate_next_movement(self, entity: MovementEntity):
+        x_increment = int(((self.window_width - self.margin)
+                           / self.width) / 10)
+        y_increment = int(((self.window_height - self.margin)
+                           / self.height) / 10)
+        target_pixels = self.calculate_pixels_tuple(entity.get_coordinates())
+        actual_pixels = list(entity.get_pixels())
+        print(f"target_pixels: {target_pixels}")
+        print(f"actual_pixels: {actual_pixels}")
+        if (entity.is_moving == MovingDirection.MOVING_DOWN):
+            actual_pixels[1] += y_increment
+            if (actual_pixels[1] > target_pixels[1]):
+                actual_pixels[1] = target_pixels[1]
+        elif (entity.is_moving == MovingDirection.MOVING_UP):
+            actual_pixels[1] -= y_increment
+            if (actual_pixels[1] < target_pixels[1]):
+                actual_pixels[1] = target_pixels[1]
+        elif (entity.is_moving == MovingDirection.MOVING_LEFT):
+            actual_pixels[0] -= x_increment
+            if (actual_pixels[0] < target_pixels[0]):
+                actual_pixels[0] = target_pixels[0]
+        elif (entity.is_moving == MovingDirection.MOVING_RIGHT):
+            actual_pixels[0] += x_increment
+            if (actual_pixels[0] > target_pixels[0]):
+                actual_pixels[0] = target_pixels[0]
+        print(f"actual_pixels: {actual_pixels}")
+        entity.set_pixels(tuple(actual_pixels))
+        if (entity.get_pixels() == target_pixels):
+            print("not moving")
+            entity.set_is_moving(MovingDirection.NOT_MOVING)
+
     def setup_entities(self, entityAdapter: EntitiesAdapter,
                        entityFactory: EntityFactory):
         player = entityAdapter.makePlayerImage()
+        coordinates: Tuple[int, int] = (int((self.width - 1) / 2),
+                                        int((self.height - 1) / 2))
+        pixels: Tuple[int, int] = self.calculate_pixels_tuple(coordinates)
         self.place_player(player)
-        self.player = entityFactory.create_player(int((self.width - 1) / 2),
-                                                  int((self.height - 1) / 2),
+        self.player = entityFactory.create_player(coordinates, pixels,
                                                   player, self.can_move)
 
         red_ghost = entityAdapter.makeRedGhostImage()
-        self.place_element(red_ghost, 0, 0)
+        coordinates: Tuple[int, int] = (0, 0)
+        pixels: Tuple[int, int] = self.calculate_pixels_tuple(coordinates)
+        self.place_element(red_ghost, pixels)
         self.ghosts.append(
-            entityFactory.create_ghost(0, 0, red_ghost, self.can_move, Ghost.GhostColor.RED)
+            entityFactory.create_ghost(coordinates, pixels, red_ghost,
+                                       self.can_move, Ghost.GhostColor.RED)
         )
 
         yellow_ghost = entityAdapter.makeYellowGhostImage()
-        self.place_element(yellow_ghost, 0, self.height - 1)
+        coordinates = (0, self.height - 1)
+        pixels = self.calculate_pixels_tuple(coordinates)
+        self.place_element(yellow_ghost, pixels)
         self.ghosts.append(
-            entityFactory.create_ghost(0, self.height - 1, yellow_ghost,
+            entityFactory.create_ghost(coordinates, pixels, yellow_ghost,
                                        self.can_move, Ghost.GhostColor.YELLOW)
         )
 
         blue_ghost = entityAdapter.makeBlueGhostImage()
-        self.place_element(blue_ghost, self.width - 1, 0)
+        coordinates = (self.width - 1, 0)
+        pixels = self.calculate_pixels_tuple(coordinates)
+        self.place_element(blue_ghost, pixels)
         self.ghosts.append(
-            entityFactory.create_ghost(self.width - 1, 0, blue_ghost,
+            entityFactory.create_ghost(coordinates, pixels, blue_ghost,
                                        self.can_move, Ghost.GhostColor.BLUE)
         )
 
         pink_ghost = entityAdapter.makePinkGhostImage()
-        self.place_element(pink_ghost, self.width - 1, self.height - 1)
+        coordinates = (self.width - 1, self.height - 1)
+        pixels = self.calculate_pixels_tuple(coordinates)
+        self.place_element(pink_ghost, pixels)
         self.ghosts.append(
-            entityFactory.create_ghost(self.width - 1, self.height - 1,
+            entityFactory.create_ghost(coordinates, pixels,
                                        pink_ghost, self.can_move,
                                        Ghost.GhostColor.PINK)
         )
@@ -173,44 +228,50 @@ class MazeUi:
             if event.type == pygame.QUIT:
                 self.running = False
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
+                if (event.key == pygame.K_LEFT
+                        and self.player.is_moving ==
+                        MovingDirection.NOT_MOVING):
                     self.player.try_move_left()
-                elif event.key == pygame.K_RIGHT:
+                elif (event.key == pygame.K_RIGHT
+                        and self.player.is_moving ==
+                        MovingDirection.NOT_MOVING):
                     self.player.try_move_right()
-                elif event.key == pygame.K_UP:
+                elif (event.key == pygame.K_UP
+                        and self.player.is_moving ==
+                        MovingDirection.NOT_MOVING):
                     self.player.try_move_up()
-                elif event.key == pygame.K_DOWN:
+                elif (event.key == pygame.K_DOWN
+                        and self.player.is_moving ==
+                        MovingDirection.NOT_MOVING):
                     self.player.try_move_down()
                 elif event.key == pygame.K_c:
                     self.player.power_up()
 
     def event_loop(self):
         clock = pygame.time.Clock()
-        movement_interval = 300
+        movement_interval = 35
         time_counter = 0
         self.running = True
         while self.running:
+            self.print_map()
             dt = clock.tick(60)
             time_counter += dt
             self.bind_events()
             if time_counter >= movement_interval:
+                if (self.player.is_moving != MovingDirection.NOT_MOVING):
+                    self.calculate_next_movement(self.player)
                 player_pos = (self.player.x, self.player.y)
                 for ghost in self.ghosts:
-                    if self.player.is_powered_up:
-                        ghost.run_from_player(player_pos)
+                    if ghost.is_moving != MovingDirection.NOT_MOVING:
+                        self.calculate_next_movement(ghost)
                     else:
-                        ghost.catch_player(player_pos)
+                        if self.player.is_powered_up:
+                            ghost.run_from_player(player_pos)
+                        else:
+                            ghost.catch_player(player_pos)
                 time_counter -= movement_interval
-            self.screen.fill("black")
-            self.makeMaze(self.width, self.height)
-            self.place_element(self.player.image,
-                               self.player.x, self.player.y)
-            for ghost in self.ghosts:
-                self.place_element(ghost.image,
-                                   ghost.x, ghost.y)
             pygame.display.flip()
         pygame.quit()
-
 
 if __name__ == '__main__':
     # pygame setup

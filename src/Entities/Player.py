@@ -10,12 +10,14 @@ class Player(MovementEntity):
     POINTS_PER_SUPER_PACGUM = 50
     POINTS_PER_GHOST = 200
 
-    def __init__(self, x: int, y: int, image: Surface | None,
+    def __init__(self, x: int, y: int,
+                 x_pixel: int, y_pixel: int,
+                 image: Surface | None,
                  can_move: Callable[
                      [tuple[int, int], tuple[int, int]], bool]) -> None:
         """Create player with position (x, y), score 0 and not powered up."""
 
-        super().__init__(x, y, image, can_move)
+        super().__init__(x, y, x_pixel, y_pixel, image, can_move)
         self.score = 0
         self.is_powered_up = False
 
