@@ -17,17 +17,21 @@ class EntityFactory:
     def create_player(self, coordinates: Tuple[int, int],
                       pixels: Tuple[int, int], image: Surface,
                       can_move: Callable[[tuple[int, int],
-                                          tuple[int, int]], bool]) -> Player:
+                                          tuple[int, int]], bool],
+                      points_per_pacgum: int, points_per_super_pacgum: int,
+                      points_per_ghost: int, lives: int) -> Player:
         """Create a Player at position (x, y)."""
 
         return Player(coordinates[0], coordinates[1],
                       pixels[0], pixels[1],
-                      image, can_move)
+                      image, can_move, points_per_pacgum,
+                      points_per_super_pacgum, points_per_ghost,
+                      lives)
 
     def create_ghost(self, coordinates: Tuple[int, int],
                      pixels: Tuple[int, int], image: Surface,
                      can_move: Callable[
-                         [tuple[int, int],tuple[int, int]], bool],
+                         [tuple[int, int], tuple[int, int]], bool],
                      color: Ghost.GhostColor) -> Ghost:
         """Create a Ghost at position (x, y)."""
 
@@ -35,7 +39,7 @@ class EntityFactory:
                      pixels[0], pixels[1],
                      image, can_move, color)
 
-    def _create_pacgum(self, x: int, y: int, is_super: bool) -> Pacgum:
+    def create_pacgum(self, x: int, y: int, is_super: bool) -> Pacgum:
         """Create a Pacgum at position (x, y).
 
         It is a super pacgum if is_super is True, a normal one otherwise.
@@ -80,13 +84,13 @@ class EntityFactory:
         pacgums: list[Pacgum] = []
         for pacgum_pos in pacgums_pos:
             pacgum_x, pacgum_y = pacgum_pos
-            pacgum = self._create_pacgum(pacgum_x, pacgum_y, False)
+            pacgum = self.create_pacgum(pacgum_x, pacgum_y, False)
             pacgums.append(pacgum)
 
         s_pacgums: list[Pacgum] = []
         for s_pacgum_pos in super_pacgums_pos:
             s_pacgum_x, s_pacgum_y = s_pacgum_pos
-            s_pacgum = self._create_pacgum(s_pacgum_x, s_pacgum_y, True)
+            s_pacgum = self.create_pacgum(s_pacgum_x, s_pacgum_y, True)
             s_pacgums.append(s_pacgum)
 
         return (player, ghosts, pacgums, s_pacgums)

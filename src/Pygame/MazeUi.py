@@ -1,16 +1,20 @@
 import pygame
 from mazegenerator import MazeGenerator
-from . import EntitiesAdapter
+from .EntitiesAdapter import EntitiesAdapter
 from .. import (EntityFactory, Ghost, Player, MovementEntity,
                 MovingDirection)
+from ..Entities.Pacgums import Pacgum
+from ..Config.ConfigParser import GameConfigModel
 from typing import Tuple
 
 
 class MazeUi:
-    def __init__(self, width: int, height: int):
+    def __init__(self, config: GameConfigModel):
         pygame.init()
-        self.width = width
-        self.height = height
+        self.config = config
+        self.current_level = 0
+        self.width = config.levels[self.current_level].width
+        self.height = config.levels[self.current_level].height
         self.window_width = 1920
         self.window_height = 1080
         self.margin = 5
@@ -23,6 +27,17 @@ class MazeUi:
         self.screen.fill("black")
         self.player: Player | None = None
         self.ghosts: list[Ghost] = []
+        self.pacgums: list[Pacgum] = []
+        self.super_pacgums: list[Pacgum] = []
+        self.entity_factory = None
+        self.entity_adapter = None
+
+    def load_level(self, level_index: int) -> None:
+        self.current_level = level_index
+        self.width = self.config.levels[self.current_level].width
+        self.height = self.config.levels[self.current_level].height
+        self.cell_size = self.calculate_cell_size()
+        self.initializeMaze()
 
     def calculate_cell_size(self):
         cell_width = (self.window_width - self.margin) / self.width
@@ -133,6 +148,7 @@ class MazeUi:
     def print_map(self):
         self.screen.fill("black")
         self.makeMaze(self.width, self.height)
+        self.draw_pacgums()
         self.place_element(self.player.image,
                            (self.player.get_pixels()))
         for ghost in self.ghosts:
@@ -176,16 +192,36 @@ class MazeUi:
             print("not moving")
             entity.set_is_moving(MovingDirection.NOT_MOVING)
 
-    def setup_entities(self, entityAdapter: EntitiesAdapter,
-                       entityFactory: EntityFactory):
+    def next_level(self):
+        if self.current_level + 1 >= len(self.config.levels):
+            self.running = False
+            return
+        self.load_level(self.current_level + 1)
+        self.entity_adapter = EntitiesAdapter(self.cell_size)
+        self.player.set_image(self.entity_adapter.makePlayerImage())
+        self.reset_player_position()
+        self.player.power_down()
+        self.setup_ghosts(self.entity_adapter, self.entity_factory)
+        self.setup_pacgums(self.entity_factory)
+
+    def setup_player(self, entityAdapter: EntitiesAdapter,
+                     entityFactory: EntityFactory) -> None:
         player = entityAdapter.makePlayerImage()
         coordinates: Tuple[int, int] = (int((self.width - 1) / 2),
                                         int((self.height - 1) / 2))
         pixels: Tuple[int, int] = self.calculate_pixels_tuple(coordinates)
         self.place_player(player)
-        self.player = entityFactory.create_player(coordinates, pixels,
-                                                  player, self.can_move)
+        self.player = (entityFactory.
+                       create_player(coordinates, pixels,
+                                     player, self.can_move,
+                                     self.config.points_per_pacgum,
+                                     self.config.points_per_super_pacgum,
+                                     self.config.points_per_ghost,
+                                     self.config.lives))
 
+    def setup_ghosts(self, entityAdapter: EntitiesAdapter,
+                     entityFactory: EntityFactory) -> None:
+        self.ghosts = []
         red_ghost = entityAdapter.makeRedGhostImage()
         coordinates: Tuple[int, int] = (0, 0)
         pixels: Tuple[int, int] = self.calculate_pixels_tuple(coordinates)
@@ -223,6 +259,80 @@ class MazeUi:
                                        Ghost.GhostColor.PINK)
         )
 
+    def setup_pacgums(self, entityFactory: EntityFactory) -> None:
+        self.pacgums = []
+        self.super_pacgums = []
+        corners = Pacgum.get_corner_positions(self.width, self.height)
+        center = (int((self.width - 1) / 2), int((self.height - 1) / 2))
+        occupied = set(corners)
+        occupied.add(center)
+
+        def is_walkable(cell: tuple[int, int]) -> bool:
+            x, y = cell
+            if not (0 <= x < self.width and 0 <= y < self.height):
+                return False
+            return self.maze.maze[y][x] != 15
+
+        free_cells = 0
+        for x in range(self.width):
+            for y in range(self.height):
+                cell = (x, y)
+                if is_walkable(cell) and cell not in occupied:
+                    free_cells += 1
+        amount = min(self.config.pacgum, free_cells)
+        positions = Pacgum.get_random_positions(self.width, self.height,
+                                                amount, is_walkable, occupied)
+
+        for x, y in corners:
+            self.super_pacgums.append(entityFactory.create_pacgum(x, y, True))
+        for x, y in positions:
+            self.pacgums.append(entityFactory.create_pacgum(x, y, False))
+
+    def setup_entities(self) -> None:
+        self.setup_player(self.entity_adapter, self.entity_factory)
+        self.setup_ghosts(self.entity_adapter, self.entity_factory)
+        self.setup_pacgums(self.entity_factory)
+
+    def reset_player_position(self) -> None:
+        self.player.x = int((self.width - 1) / 2)
+        self.player.y = int((self.height - 1) / 2)
+
+    def draw_pacgums(self) -> None:
+        color = (255, 184, 174)
+        for pacgum in self.pacgums:
+            rect = self.calculate_rect_for_cell((pacgum.x, pacgum.y))
+            radius = max(1, int(min(rect.width, rect.height) / 10))
+            pygame.draw.circle(self.screen, color, rect.center, radius)
+        for pacgum in self.super_pacgums:
+            rect = self.calculate_rect_for_cell((pacgum.x, pacgum.y))
+            radius = max(1, int(min(rect.width, rect.height) / 3))
+            pygame.draw.circle(self.screen, color, rect.center, radius)
+
+    def eat_pacgums(self) -> None:
+        for pacgum in list(self.pacgums):
+            if pacgum.x == self.player.x and pacgum.y == self.player.y:
+                self.pacgums.remove(pacgum)
+                self.player.add_pacgum_points()
+                print(self.player.score)
+        for pacgum in list(self.super_pacgums):
+            if pacgum.x == self.player.x and pacgum.y == self.player.y:
+                self.super_pacgums.remove(pacgum)
+                self.player.add_super_pacgum_points()
+                self.player.power_up()
+
+    def check_collisions(self) -> None:
+        for ghost in self.ghosts:
+            if ghost.x == self.player.x and ghost.y == self.player.y:
+                if self.player.is_powered_up:
+                    self.player.add_ghost_points()
+                    ghost.respawn()
+                else:
+                    self.player.lose_life()
+                    self.reset_player_position()
+                    if self.player.lives == 0:
+                        self.running = False
+                    break
+
     def bind_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -246,6 +356,14 @@ class MazeUi:
                     self.player.try_move_down()
                 elif event.key == pygame.K_c:
                     self.player.power_up()
+                elif event.key == pygame.K_r:
+                    self.reset_player_position()
+                elif event.key == pygame.K_p:
+                    self.player.add_pacgum_points()
+                    print(self.player.score)
+                elif event.key == pygame.K_l:
+                    self.player.lose_life()
+                    print(self.player.lives)
 
     def event_loop(self):
         clock = pygame.time.Clock()
@@ -257,6 +375,10 @@ class MazeUi:
             dt = clock.tick(60)
             time_counter += dt
             self.bind_events()
+            self.check_collisions()
+            self.eat_pacgums()
+            if not self.pacgums:
+                self.next_level()
             if time_counter >= movement_interval:
                 if (self.player.is_moving != MovingDirection.NOT_MOVING):
                     self.calculate_next_movement(self.player)
@@ -270,8 +392,10 @@ class MazeUi:
                         else:
                             ghost.catch_player(player_pos)
                 time_counter -= movement_interval
+                self.check_collisions()
             pygame.display.flip()
         pygame.quit()
+
 
 if __name__ == '__main__':
     # pygame setup

@@ -6,20 +6,22 @@ from typing import Callable
 class Player(MovementEntity):
     """Pac-Man player: adds score and power-up state to MovementEntity."""
 
-    POINTS_PER_PACGUM = 10
-    POINTS_PER_SUPER_PACGUM = 50
-    POINTS_PER_GHOST = 200
-
     def __init__(self, x: int, y: int,
                  x_pixel: int, y_pixel: int,
                  image: Surface | None,
                  can_move: Callable[
-                     [tuple[int, int], tuple[int, int]], bool]) -> None:
+                     [tuple[int, int], tuple[int, int]], bool],
+                 points_per_pacgum: int, points_per_super_pacgum: int,
+                 points_per_ghost: int, lives: int) -> None:
         """Create player with position (x, y), score 0 and not powered up."""
 
         super().__init__(x, y, x_pixel, y_pixel, image, can_move)
         self.score = 0
         self.is_powered_up = False
+        self.points_per_pacgum = points_per_pacgum
+        self.points_per_super_pacgum = points_per_super_pacgum
+        self.points_per_ghost = points_per_ghost
+        self.lives = lives
 
     def add_pacgum_points(self) -> None:
         """Add POINTS_PER_PACGUM to the score.
@@ -28,7 +30,7 @@ class Player(MovementEntity):
         is not done here.
         """
 
-        self.score = self.POINTS_PER_PACGUM + self.score
+        self.score = self.points_per_pacgum + self.score
 
     def add_super_pacgum_points(self) -> None:
         """Add POINTS_PER_SUPER_PACGUM to the score.
@@ -36,12 +38,12 @@ class Player(MovementEntity):
         It does not activate the power-up state; call power_up for that.
         """
 
-        self.score = self.POINTS_PER_SUPER_PACGUM + self.score
+        self.score = self.points_per_super_pacgum + self.score
 
     def add_ghost_points(self) -> None:
         """Add POINTS_PER_GHOST to the score."""
 
-        self.score = self.POINTS_PER_GHOST + self.score
+        self.score = self.points_per_ghost + self.score
 
     def power_up(self) -> None:
         """Set is_powered_up to True (the player ate a super pac-gum).
@@ -58,6 +60,9 @@ class Player(MovementEntity):
         """
 
         self.is_powered_up = False
+
+    def lose_life(self) -> None:
+        self.lives = max(0, self.lives - 1)
 
 
 if __name__ == "__main__":

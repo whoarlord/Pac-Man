@@ -13,14 +13,10 @@ if __name__ == '__main__':
               file=sys.stderr)
         sys.exit(1)
     parser = ConfigParser(config_path)
-
-    levels = parser.config.levels
-    width = levels[0].width
-    height = levels[0].height
-
     entityFactory = EntityFactory()
-    mazeUi = MazeUi(width, height)
+    mazeUi = MazeUi(parser.config)
     entityAdapter = EntitiesAdapter(mazeUi.cell_size)
-    mazeUi.makeMaze(width, height)
-    mazeUi.setup_entities(entityAdapter, entityFactory)
+    mazeUi.entity_factory = entityFactory
+    mazeUi.entity_adapter = entityAdapter
+    mazeUi.setup_entities()
     mazeUi.event_loop()
