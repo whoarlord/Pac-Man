@@ -265,6 +265,19 @@ class MazeUi:
                 self.player.add_super_pacgum_points()
                 self.player.power_up()
 
+    def check_collisions(self) -> None:
+        for ghost in self.ghosts:
+            if ghost.x == self.player.x and ghost.y == self.player.y:
+                if self.player.is_powered_up:
+                    self.player.add_ghost_points()
+                    ghost.respawn()
+                else:
+                    self.player.lose_life()
+                    self.reset_player_position()
+                    if self.player.lives == 0:
+                        self.running = False
+                    break
+
     def bind_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -298,6 +311,7 @@ class MazeUi:
             dt = clock.tick(60)
             time_counter += dt
             self.bind_events()
+            self.check_collisions()
             self.eat_pacgums()
             if not self.pacgums:
                 self.netx_level()
@@ -308,6 +322,7 @@ class MazeUi:
                         ghost.run_from_player(player_pos)
                     else:
                         ghost.catch_player(player_pos)
+                self.check_collisions()
                 time_counter -= movement_interval
             self.screen.fill("black")
             self.makeMaze(self.width, self.height)

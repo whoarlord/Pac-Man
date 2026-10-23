@@ -28,9 +28,15 @@ class Ghost(MovementEntity):
 
         super().__init__(x, y, image, can_move)
         self.color = color
+        self.spawn_x = x
+        self.spawn_y = y
 
     def set_image(self, image: Surface):
         self.image = image
+
+    def respawn(self) -> None:
+        self.x = self.spawn_x
+        self.y = self.spawn_y
 
     def _get_neighbors(self, cell: tuple[int, int]):
         """Return the walkable cells next to cell.
