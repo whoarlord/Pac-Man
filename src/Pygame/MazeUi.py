@@ -1,6 +1,6 @@
 import pygame
 from mazegenerator import MazeGenerator
-from . import EntitiesAdapter
+from .EntitiesAdapter import EntitiesAdapter
 from .. import EntityFactory, Ghost, Player
 from ..Entities.Pacgums import Pacgum
 from ..Config.ConfigParser import GameConfigModel
@@ -28,6 +28,8 @@ class MazeUi:
         self.ghosts: list[Ghost] = []
         self.pacgums: list[Pacgum] = []
         self.super_pacgums: list[Pacgum] = []
+        self.entity_factory = None
+        self.entity_adapter = None
 
     def load_level(self, level_index: int) -> None:
         self.current_level = level_index
@@ -145,6 +147,18 @@ class MazeUi:
             return False
         return (actual_cell & wall) == 0
 
+    def netx_level(self):
+        if self.current_level + 1 >= len(self.config.levels):
+            self.running = False
+            return
+        self.load_level(self.current_level + 1)
+        self.entity_adapter = EntitiesAdapter(self.cell_size)
+        self.player.set_image(self.entity_adapter.makePlayerImage())
+        self.reset_player_position()
+        self.player.power_down()
+        self.setup_ghosts(self.entity_adapter, self.entity_factory)
+        self.setup_pacgums(self.entity_factory)
+
     def setup_player(self, entityAdapter: EntitiesAdapter,
                      entityFactory: EntityFactory) -> None:
         player = entityAdapter.makePlayerImage()
@@ -219,11 +233,10 @@ class MazeUi:
         for x, y in positions:
             self.pacgums.append(entityFactory.create_pacgum(x, y, False))
 
-    def setup_entities(self, entityAdapter: EntitiesAdapter,
-                       entityFactory: EntityFactory) -> None:
-        self.setup_player(entityAdapter, entityFactory)
-        self.setup_ghosts(entityAdapter, entityFactory)
-        self.setup_pacgums(entityFactory)
+    def setup_entities(self) -> None:
+        self.setup_player(self.entity_adapter, self.entity_factory)
+        self.setup_ghosts(self.entity_adapter, self.entity_factory)
+        self.setup_pacgums(self.entity_factory)
 
     def reset_player_position(self) -> None:
         self.player.x = int((self.width - 1) / 2)
@@ -286,6 +299,8 @@ class MazeUi:
             time_counter += dt
             self.bind_events()
             self.eat_pacgums()
+            if not self.pacgums:
+                self.netx_level()
             if time_counter >= movement_interval:
                 player_pos = (self.player.x, self.player.y)
                 for ghost in self.ghosts:
