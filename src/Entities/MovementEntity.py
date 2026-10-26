@@ -1,6 +1,7 @@
 from pygame import Surface
 from typing import Callable, Tuple
 from enum import Enum
+import pygame
 
 
 class MovingDirection(Enum):
@@ -12,7 +13,6 @@ class MovingDirection(Enum):
 
 
 class MovementEntity():
-
     """Pac-Man entity: stores its position.
 
     The position is stored as (x, y), where x is the column and y
@@ -34,34 +34,48 @@ class MovementEntity():
         self.y_pixel = y_pixel
         self.image = image
         self.can_move = can_move
-        self.is_moving = MovingDirection.NOT_MOVING
+        self.current_direction = MovingDirection.NOT_MOVING
+        self.desired_direction = MovingDirection.NOT_MOVING
+        self.rotation: int = 0
+        self.try_move_mapper = {
+            MovingDirection.MOVING_DOWN: self.try_move_down,
+            MovingDirection.MOVING_LEFT: self.try_move_left,
+            MovingDirection.MOVING_RIGHT: self.try_move_right,
+            MovingDirection.MOVING_UP: self.try_move_up
+        }
 
     def set_image(self, image: Surface):
         self.image = image
 
     def move_up(self) -> None:
         """Move the entity one cell up."""
-
-        self.set_is_moving(MovingDirection.MOVING_UP)
         self.y = self.y - 1
 
     def move_down(self) -> None:
         """Move the entity one cell down."""
-
-        self.set_is_moving(MovingDirection.MOVING_DOWN)
         self.y = self.y + 1
 
     def move_left(self) -> None:
         """Move the entity one cell to the left."""
-
-        self.set_is_moving(MovingDirection.MOVING_LEFT)
         self.x = self.x - 1
 
     def move_right(self) -> None:
         """Move the entity one cell to the right."""
-
-        self.set_is_moving(MovingDirection.MOVING_RIGHT)
         self.x = self.x + 1
+
+    def get_moving_image(self):
+        return ''
+
+    def try_move_player(self, direction: MovingDirection) -> bool:
+        if (direction != MovingDirection.NOT_MOVING):
+            self.try_move_mapper.get(direction)()
+        return self.current_direction != MovingDirection.NOT_MOVING
+
+    def update_player_direction(self) -> None:
+        if self.try_move_player(self.desired_direction):
+            self.current_direction = self.desired_direction
+        elif not self.try_move_player(self.current_direction):
+            self.current_direction = MovingDirection.NOT_MOVING
 
     def try_move_up(self) -> None:
         if (self.can_move((self.x, self.y), self.next_pos_up())):
@@ -79,9 +93,9 @@ class MovementEntity():
         if (self.can_move((self.x, self.y), self.next_pos_right())):
             self.move_right()
 
-    def set_is_moving(self, is_moving: MovingDirection):
-        if (isinstance(is_moving, MovingDirection)):
-            self.is_moving = is_moving
+    def set_current_direction(self, current_direction: MovingDirection):
+        if (isinstance(current_direction, MovingDirection)):
+            self.current_direction = current_direction
 
     def get_pixels(self) -> Tuple[int, int]:
         return (self.x_pixel, self.y_pixel)
