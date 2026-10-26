@@ -1,6 +1,6 @@
-from src.Entities.MovementEntity import MovementEntity
 from pygame import Surface
 from typing import Callable
+from src.Entities import MovingDirection, MovementEntity
 
 
 class Player(MovementEntity):
@@ -14,7 +14,6 @@ class Player(MovementEntity):
                  points_per_pacgum: int, points_per_super_pacgum: int,
                  points_per_ghost: int, lives: int) -> None:
         """Create player with position (x, y), score 0 and not powered up."""
-
         super().__init__(x, y, x_pixel, y_pixel, image, can_move)
         self.score = 0
         self.is_powered_up = False
@@ -63,6 +62,9 @@ class Player(MovementEntity):
 
     def lose_life(self) -> None:
         self.lives = max(0, self.lives - 1)
+
+    def get_moving_image(self):
+        return self.images.get(self.current_direction)
 
 
 if __name__ == "__main__":

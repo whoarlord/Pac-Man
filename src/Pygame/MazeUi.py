@@ -48,8 +48,6 @@ class MazeUi:
         self.power_up_timer = 0
         self.POWER_UP_DURATION = 7000
         self.level_timer = 0
-        self.desired_direction = MovingDirection.NOT_MOVING
-        self.current_direction = MovingDirection.NOT_MOVING
 
     def load_level(self, level_index: int) -> None:
         self.current_level = level_index
@@ -202,6 +200,8 @@ class MazeUi:
         division: int = 10
         if (isinstance(entity, Player)):
             division = 5
+            img = self.entity_adapter.makePlayerImage(entity.current_direction)
+            entity.set_image(img)
         x_increment = int(((self.window_width - self.margin)
                            / self.width) / division)
         y_increment = int(((self.maze_height - self.margin)
@@ -210,19 +210,19 @@ class MazeUi:
         actual_pixels = list(entity.get_pixels())
         # print(f"target_pixels: {target_pixels}")
         # print(f"actual_pixels: {actual_pixels}")
-        if (entity.is_moving == MovingDirection.MOVING_DOWN):
+        if (entity.current_direction == MovingDirection.MOVING_DOWN):
             actual_pixels[1] += y_increment
             if (actual_pixels[1] > target_pixels[1]):
                 actual_pixels[1] = target_pixels[1]
-        elif (entity.is_moving == MovingDirection.MOVING_UP):
+        elif (entity.current_direction == MovingDirection.MOVING_UP):
             actual_pixels[1] -= y_increment
             if (actual_pixels[1] < target_pixels[1]):
                 actual_pixels[1] = target_pixels[1]
-        elif (entity.is_moving == MovingDirection.MOVING_LEFT):
+        elif (entity.current_direction == MovingDirection.MOVING_LEFT):
             actual_pixels[0] -= x_increment
             if (actual_pixels[0] < target_pixels[0]):
                 actual_pixels[0] = target_pixels[0]
-        elif (entity.is_moving == MovingDirection.MOVING_RIGHT):
+        elif (entity.current_direction == MovingDirection.MOVING_RIGHT):
             actual_pixels[0] += x_increment
             if (actual_pixels[0] > target_pixels[0]):
                 actual_pixels[0] = target_pixels[0]
@@ -230,7 +230,7 @@ class MazeUi:
         entity.set_pixels(tuple(actual_pixels))
         if (entity.get_pixels() == target_pixels):
             # print("not moving")
-            entity.set_is_moving(MovingDirection.NOT_MOVING)
+            entity.set_current_direction(MovingDirection.NOT_MOVING)
 
     def next_level(self):
         if self.current_level + 1 >= len(self.config.levels):
@@ -238,7 +238,7 @@ class MazeUi:
             return
         self.load_level(self.current_level + 1)
         self.entity_adapter = EntitiesAdapter(self.cell_size)
-        self.player.set_image(self.entity_adapter.makePlayerImage())
+        self.player.set_image(self.entity_adapter.makePlayerImage(MovingDirection.NOT_MOVING))
         self.reset_player_position()
         self.player.power_down()
         self.power_up_timer = 0
@@ -248,7 +248,7 @@ class MazeUi:
 
     def setup_player(self, entityAdapter: EntitiesAdapter,
                      entityFactory: EntityFactory) -> None:
-        player = entityAdapter.makePlayerImage()
+        player = entityAdapter.makePlayerImage(MovingDirection.NOT_MOVING)
         coordinates: Tuple[int, int] = (int((self.width - 1) / 2),
                                         int((self.height - 1) / 2))
         pixels: Tuple[int, int] = self.calculate_pixels_tuple(coordinates)
@@ -341,9 +341,8 @@ class MazeUi:
         px_jugador = self.calculate_pixels_tuple(
             (self.player.x, self.player.y))
         self.player.set_pixels(px_jugador)
-        self.player.set_is_moving(MovingDirection.NOT_MOVING)
-        self.desired_direction = MovingDirection.NOT_MOVING
-        self.current_direction = MovingDirection.NOT_MOVING
+        self.player.set_current_direction(MovingDirection.NOT_MOVING)
+        self.player.desired_direction = MovingDirection.NOT_MOVING
 
     def draw_pacgums(self) -> None:
         color = (255, 184, 174)
@@ -382,7 +381,7 @@ class MazeUi:
             ghost.respawn()
             px_g = self.calculate_pixels_tuple((ghost.x, ghost.y))
             ghost.set_pixels(px_g)
-            ghost.set_is_moving(MovingDirection.NOT_MOVING)
+            ghost.set_current_direction(MovingDirection.NOT_MOVING)
 
     def check_collisions(self) -> None:
         width_c, height_c = self.cell_size
@@ -409,31 +408,12 @@ class MazeUi:
                     ghost.respawn()
                     px_ghost = self.calculate_pixels_tuple((ghost.x, ghost.y))
                     ghost.set_pixels(px_ghost)
-                    ghost.set_is_moving(MovingDirection.NOT_MOVING)
+                    ghost.set_current_direction(MovingDirection.NOT_MOVING)
                 else:
                     self.lose_life_and_reset()
                     lives = self.player.lives
                     print(f"¡Te han tocado! Vidas restantes: {lives}")
                     break
-
-    def try_move_player(self, direction: MovingDirection) -> bool:
-        moves = {
-            MovingDirection.MOVING_UP: self.player.try_move_up,
-            MovingDirection.MOVING_DOWN: self.player.try_move_down,
-            MovingDirection.MOVING_LEFT: self.player.try_move_left,
-            MovingDirection.MOVING_RIGHT: self.player.try_move_right,
-        }
-        move = moves.get(direction)
-        if move is None:
-            return False
-        move()
-        return self.player.is_moving != MovingDirection.NOT_MOVING
-
-    def update_player_direction(self) -> None:
-        if self.try_move_player(self.desired_direction):
-            self.current_direction = self.desired_direction
-        elif not self.try_move_player(self.current_direction):
-            self.current_direction = MovingDirection.NOT_MOVING
 
     def bind_events(self):
         for event in pygame.event.get():
@@ -441,7 +421,8 @@ class MazeUi:
                 self.running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key in self.KEY_DIRECTIONS:
-                    self.desired_direction = self.KEY_DIRECTIONS[event.key]
+                    self.player.desired_direction = self.KEY_DIRECTIONS[
+                        event.key]
                 elif event.key == pygame.K_c:
                     self.player.power_up()
                 elif event.key == pygame.K_c:
@@ -480,15 +461,15 @@ class MazeUi:
             if not self.pacgums:
                 self.next_level()
             if time_counter >= movement_interval:
-                if self.player.is_moving == MovingDirection.NOT_MOVING:
-                    self.update_player_direction()
-                if self.player.is_moving != MovingDirection.NOT_MOVING:
+                if self.player.current_direction == MovingDirection.NOT_MOVING:
+                    self.player.update_player_direction()
+                if self.player.current_direction != MovingDirection.NOT_MOVING:
                     self.calculate_next_movement(self.player)
-                    if self.player.is_moving == MovingDirection.NOT_MOVING:
-                        self.update_player_direction()
+                    if self.player.current_direction == MovingDirection.NOT_MOVING:
+                        self.player.update_player_direction()
                 player_pos = (self.player.x, self.player.y)
                 for ghost in self.ghosts:
-                    if ghost.is_moving != MovingDirection.NOT_MOVING:
+                    if ghost.current_direction != MovingDirection.NOT_MOVING:
                         self.calculate_next_movement(ghost)
                     else:
                         if self.player.is_powered_up:
