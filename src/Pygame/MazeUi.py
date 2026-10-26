@@ -33,6 +33,7 @@ class MazeUi:
         self.entity_adapter = None
         self.power_up_timer = 0
         self.POWER_UP_DURATION = 7000
+        self.level_timer = 0
 
     def load_level(self, level_index: int) -> None:
         self.current_level = level_index
@@ -171,8 +172,8 @@ class MazeUi:
                            / self.height) / 10)
         target_pixels = self.calculate_pixels_tuple(entity.get_coordinates())
         actual_pixels = list(entity.get_pixels())
-        print(f"target_pixels: {target_pixels}")
-        print(f"actual_pixels: {actual_pixels}")
+        # print(f"target_pixels: {target_pixels}")
+        # print(f"actual_pixels: {actual_pixels}")
         if (entity.is_moving == MovingDirection.MOVING_DOWN):
             actual_pixels[1] += y_increment
             if (actual_pixels[1] > target_pixels[1]):
@@ -189,10 +190,10 @@ class MazeUi:
             actual_pixels[0] += x_increment
             if (actual_pixels[0] > target_pixels[0]):
                 actual_pixels[0] = target_pixels[0]
-        print(f"actual_pixels: {actual_pixels}")
+        # print(f"actual_pixels: {actual_pixels}")
         entity.set_pixels(tuple(actual_pixels))
         if (entity.get_pixels() == target_pixels):
-            print("not moving")
+            # print("not moving")
             entity.set_is_moving(MovingDirection.NOT_MOVING)
 
     def next_level(self):
@@ -205,6 +206,7 @@ class MazeUi:
         self.reset_player_position()
         self.player.power_down()
         self.power_up_timer = 0
+        self.level_timer = 0
         self.setup_ghosts(self.entity_adapter, self.entity_factory)
         self.setup_pacgums(self.entity_factory)
 
@@ -330,6 +332,20 @@ class MazeUi:
                 self.player.power_up()
                 self.power_up_timer = 0
 
+    def lose_life_and_reset(self) -> None:
+        self.player.lose_life()
+        self.player.power_down()
+        self.power_up_timer = 0
+        if self.player.lives <= 0:
+            self.running = False
+            return
+        self.reset_player_position()
+        for ghost in self.ghosts:
+            ghost.respawn()
+            px_g = self.calculate_pixels_tuple((ghost.x, ghost.y))
+            ghost.set_pixels(px_g)
+            ghost.set_is_moving(MovingDirection.NOT_MOVING)
+
     def check_collisions(self) -> None:
         width_c, height_c = self.cell_size
 
@@ -357,21 +373,9 @@ class MazeUi:
                     ghost.set_pixels(px_ghost)
                     ghost.set_is_moving(MovingDirection.NOT_MOVING)
                 else:
-                    self.player.lose_life()
+                    self.lose_life_and_reset()
                     lives = self.player.lives
                     print(f"¡Te han tocado! Vidas restantes: {lives}")
-
-                    if self.player.lives <= 0:
-                        self.running = False
-                    else:
-                        self.reset_player_position()
-
-                        for ghost in self.ghosts:
-                            ghost.respawn()
-                            px_g = self.calculate_pixels_tuple((ghost.x,
-                                                                ghost.y))
-                            ghost.set_pixels(px_g)
-                            ghost.set_is_moving(MovingDirection.NOT_MOVING)
                     break
 
     def bind_events(self):
@@ -420,6 +424,12 @@ class MazeUi:
                 if self.power_up_timer >= self.POWER_UP_DURATION:
                     self.player.power_down()
                     self.power_up_timer = 0
+            self.level_timer += dt
+            if self.level_timer >= self.config.level_max_time * 1000:
+                print("Tiempo agotado")
+                self.lose_life_and_reset()
+                print(f"Vidas restantes: {self.player.lives}")
+                self.level_timer = 0
             self.bind_events()
             self.eat_pacgums()
             if not self.pacgums:
