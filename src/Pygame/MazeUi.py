@@ -9,6 +9,17 @@ from typing import Tuple
 
 
 class MazeUi:
+    KEY_DIRECTIONS = {
+        pygame.K_UP: MovingDirection.MOVING_UP,
+        pygame.K_w: MovingDirection.MOVING_UP,
+        pygame.K_DOWN: MovingDirection.MOVING_DOWN,
+        pygame.K_s: MovingDirection.MOVING_DOWN,
+        pygame.K_LEFT: MovingDirection.MOVING_LEFT,
+        pygame.K_a: MovingDirection.MOVING_LEFT,
+        pygame.K_RIGHT: MovingDirection.MOVING_RIGHT,
+        pygame.K_d: MovingDirection.MOVING_RIGHT,
+    }
+
     def __init__(self, config: GameConfigModel):
         pygame.init()
         self.font = pygame.font.Font(None, 40)
@@ -37,6 +48,8 @@ class MazeUi:
         self.power_up_timer = 0
         self.POWER_UP_DURATION = 7000
         self.level_timer = 0
+        self.desired_direction = MovingDirection.NOT_MOVING
+        self.current_direction = MovingDirection.NOT_MOVING
 
     def load_level(self, level_index: int) -> None:
         self.current_level = level_index
@@ -188,7 +201,7 @@ class MazeUi:
     def calculate_next_movement(self, entity: MovementEntity):
         division: int = 10
         if (isinstance(entity, Player)):
-            division = 2
+            division = 5
         x_increment = int(((self.window_width - self.margin)
                            / self.width) / division)
         y_increment = int(((self.maze_height - self.margin)
@@ -329,6 +342,8 @@ class MazeUi:
             (self.player.x, self.player.y))
         self.player.set_pixels(px_jugador)
         self.player.set_is_moving(MovingDirection.NOT_MOVING)
+        self.desired_direction = MovingDirection.NOT_MOVING
+        self.current_direction = MovingDirection.NOT_MOVING
 
     def draw_pacgums(self) -> None:
         color = (255, 184, 174)
@@ -401,27 +416,34 @@ class MazeUi:
                     print(f"¡Te han tocado! Vidas restantes: {lives}")
                     break
 
+    def try_move_player(self, direction: MovingDirection) -> bool:
+        moves = {
+            MovingDirection.MOVING_UP: self.player.try_move_up,
+            MovingDirection.MOVING_DOWN: self.player.try_move_down,
+            MovingDirection.MOVING_LEFT: self.player.try_move_left,
+            MovingDirection.MOVING_RIGHT: self.player.try_move_right,
+        }
+        move = moves.get(direction)
+        if move is None:
+            return False
+        move()
+        return self.player.is_moving != MovingDirection.NOT_MOVING
+
+    def update_player_direction(self) -> None:
+        if self.try_move_player(self.desired_direction):
+            self.current_direction = self.desired_direction
+        elif not self.try_move_player(self.current_direction):
+            self.current_direction = MovingDirection.NOT_MOVING
+
     def bind_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
             elif event.type == pygame.KEYDOWN:
-                if (event.key == pygame.K_LEFT
-                        and self.player.is_moving ==
-                        MovingDirection.NOT_MOVING):
-                    self.player.try_move_left()
-                elif (event.key == pygame.K_RIGHT
-                        and self.player.is_moving ==
-                        MovingDirection.NOT_MOVING):
-                    self.player.try_move_right()
-                elif (event.key == pygame.K_UP
-                        and self.player.is_moving ==
-                        MovingDirection.NOT_MOVING):
-                    self.player.try_move_up()
-                elif (event.key == pygame.K_DOWN
-                        and self.player.is_moving ==
-                        MovingDirection.NOT_MOVING):
-                    self.player.try_move_down()
+                if event.key in self.KEY_DIRECTIONS:
+                    self.desired_direction = self.KEY_DIRECTIONS[event.key]
+                elif event.key == pygame.K_c:
+                    self.player.power_up()
                 elif event.key == pygame.K_c:
                     self.player.power_up()
                 elif event.key == pygame.K_r:
@@ -458,8 +480,12 @@ class MazeUi:
             if not self.pacgums:
                 self.next_level()
             if time_counter >= movement_interval:
-                if (self.player.is_moving != MovingDirection.NOT_MOVING):
+                if self.player.is_moving == MovingDirection.NOT_MOVING:
+                    self.update_player_direction()
+                if self.player.is_moving != MovingDirection.NOT_MOVING:
                     self.calculate_next_movement(self.player)
+                    if self.player.is_moving == MovingDirection.NOT_MOVING:
+                        self.update_player_direction()
                 player_pos = (self.player.x, self.player.y)
                 for ghost in self.ghosts:
                     if ghost.is_moving != MovingDirection.NOT_MOVING:
