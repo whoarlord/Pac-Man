@@ -1,4 +1,4 @@
-from src.Entities.MovementEntity import MovementEntity
+from src.Entities.MovementEntity import MovementEntity, MovingDirection
 from typing import Callable
 from collections import deque
 from enum import Enum
@@ -114,12 +114,16 @@ class Ghost(MovementEntity):
         # Compare cell with where each move would take the ghost.
         if cell == self.next_pos_up():
             self.move_up()
+            self.current_direction = MovingDirection.MOVING_UP
         elif cell == self.next_pos_down():
             self.move_down()
+            self.current_direction = MovingDirection.MOVING_DOWN
         elif cell == self.next_pos_left():
             self.move_left()
+            self.current_direction = MovingDirection.MOVING_LEFT
         elif cell == self.next_pos_right():
             self.move_right()
+            self.current_direction = MovingDirection.MOVING_RIGHT
 
     # To agree with partner: how is_walkable reaches the ghost
     # (it must also return False for cells outside the map), and whether

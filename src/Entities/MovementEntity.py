@@ -69,9 +69,9 @@ class MovementEntity():
     def try_move_player(self, direction: MovingDirection) -> bool:
         if (direction != MovingDirection.NOT_MOVING):
             self.try_move_mapper.get(direction)()
-        return self.current_direction != MovingDirection.NOT_MOVING
+        return self.desired_direction != MovingDirection.NOT_MOVING
 
-    def update_player_direction(self) -> None:
+    def update_direction(self) -> None:
         if self.try_move_player(self.desired_direction):
             self.current_direction = self.desired_direction
         elif not self.try_move_player(self.current_direction):

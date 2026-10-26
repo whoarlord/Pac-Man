@@ -7,20 +7,34 @@ class EntitiesAdapter:
     def __init__(self, entity_dimensions: Tuple[int, int]):
         self.img_route = "src/img/"
         self.entity_dimensions = entity_dimensions
-        self.player_images = {
-            MovingDirection.NOT_MOVING: f'{self.img_route}pacman_left.png',
-            MovingDirection.MOVING_UP: f'{self.img_route}pacman_up.png',
-            MovingDirection.MOVING_DOWN: f'{self.img_route}pacman_down.png',
-            MovingDirection.MOVING_LEFT: f'{self.img_route}pacman_left.png',
-            MovingDirection.MOVING_RIGHT: f'{self.img_route}pacman_right.png',
-        }
+        self.pacman_state = 1
+        self.calls_counter: int = 0
+
+    def _get_pacman_image(self, direction: MovingDirection):
+        if direction is MovingDirection.MOVING_UP:
+            return f'{self.img_route}pacman_up_{self.pacman_state}.png'
+        elif direction is MovingDirection.MOVING_DOWN:
+            return f'{self.img_route}pacman_down_{self.pacman_state}.png'
+        elif (direction is MovingDirection.MOVING_RIGHT
+                or direction is MovingDirection.NOT_MOVING):
+            return f'{self.img_route}pacman_right_{self.pacman_state}.png'
+        elif direction is MovingDirection.MOVING_LEFT:
+            return f'{self.img_route}pacman_left_{self.pacman_state}.png'
 
     def _load_entity(self, route: str):
         img = pygame.image.load(route).convert_alpha()
         return pygame.transform.scale(img, self.entity_dimensions)
 
     def makePlayerImage(self, direction: MovingDirection):
-        img = self.player_images.get(direction)
+        img = self._get_pacman_image(direction)
+        if self.calls_counter >= 2:
+            self.calls_counter = 0
+            if (self.pacman_state == 4):
+                self.pacman_state = 1
+            else:
+                self.pacman_state += 1
+        else:
+            self.calls_counter += 1
         return self._load_entity(img)
 
     def makeRedGhostImage(self):
