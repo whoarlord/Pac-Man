@@ -186,10 +186,13 @@ class MazeUi:
                 self.margin + int(y_increment * (coordinates[1])))
 
     def calculate_next_movement(self, entity: MovementEntity):
+        division: int = 10
+        if (isinstance(entity, Player)):
+            division = 2
         x_increment = int(((self.window_width - self.margin)
-                           / self.width) / 10)
+                           / self.width) / division)
         y_increment = int(((self.maze_height - self.margin)
-                           / self.height) / 10)
+                           / self.height) / division)
         target_pixels = self.calculate_pixels_tuple(entity.get_coordinates())
         actual_pixels = list(entity.get_pixels())
         # print(f"target_pixels: {target_pixels}")
