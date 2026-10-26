@@ -11,12 +11,15 @@ from typing import Tuple
 class MazeUi:
     def __init__(self, config: GameConfigModel):
         pygame.init()
+        self.font = pygame.font.Font(None, 40)
         self.config = config
         self.current_level = 0
         self.width = config.levels[self.current_level].width
         self.height = config.levels[self.current_level].height
         self.window_width = 1920
         self.window_height = 1080
+        self.hud_height = 60
+        self.maze_height = self.window_height - self.hud_height
         self.margin = 5
         self.thick = 3
         self.lines_color = (255, 255, 255)
@@ -44,7 +47,7 @@ class MazeUi:
 
     def calculate_cell_size(self):
         cell_width = (self.window_width - self.margin) / self.width
-        cell_height = (self.window_height - self.margin) / self.height
+        cell_height = (self.maze_height - self.margin) / self.height
         return (cell_width, cell_height)
 
     def saveImage(self, image, name):
@@ -80,7 +83,7 @@ class MazeUi:
         x = self.margin
         y = self.margin
         x_increment = (self.window_width - self.margin) / x_cells
-        y_increment = (self.window_height - self.margin) / y_cells
+        y_increment = (self.maze_height - self.margin) / y_cells
         for i in range(y_cells):
             for j in range(x_cells):
                 actual_cell = self.maze.maze[i][j]
@@ -122,7 +125,7 @@ class MazeUi:
 
     def calculate_rect_for_cell(self, cell: Tuple[int, int]) -> pygame.Rect:
         x_increment = (self.window_width - self.margin) / self.width
-        y_increment = (self.window_height - self.margin) / self.height
+        y_increment = (self.maze_height - self.margin) / self.height
         return pygame.Rect(cell[0], cell[1], x_increment,
                            y_increment)
 
@@ -148,6 +151,21 @@ class MazeUi:
             return False
         return (actual_cell & wall) == 0
 
+    def draw_hud(self) -> None:
+        remaining = max(0, self.config.level_max_time
+                        - self.level_timer // 1000)
+        texts = [
+            f"Score: {self.player.score}",
+            f"Lives: {self.player.lives}",
+            f"Level: {self.current_level + 1}",
+            f"Time: {remaining}"
+        ]
+        for i, text in enumerate(texts):
+            image = self.font.render(text, True, (255, 255, 255))
+            x = 20 + i * (self.window_width // 4)
+            y = self.maze_height + (self.hud_height - image.get_height()) // 2
+            self.screen.blit(image, (x, y))
+
     def print_map(self):
         self.screen.fill("black")
         self.makeMaze(self.width, self.height)
@@ -157,18 +175,19 @@ class MazeUi:
         for ghost in self.ghosts:
             self.place_element(ghost.image,
                                ghost.get_pixels())
+        self.draw_hud()
         self.check_collisions()
 
     def calculate_pixels_tuple(self, coordinates: Tuple[int, int]):
         x_increment = (self.window_width - self.margin) / self.width
-        y_increment = (self.window_height - self.margin) / self.height
+        y_increment = (self.maze_height - self.margin) / self.height
         return (self.margin + int(x_increment * (coordinates[0])),
                 self.margin + int(y_increment * (coordinates[1])))
 
     def calculate_next_movement(self, entity: MovementEntity):
         x_increment = int(((self.window_width - self.margin)
                            / self.width) / 10)
-        y_increment = int(((self.window_height - self.margin)
+        y_increment = int(((self.maze_height - self.margin)
                            / self.height) / 10)
         target_pixels = self.calculate_pixels_tuple(entity.get_coordinates())
         actual_pixels = list(entity.get_pixels())
