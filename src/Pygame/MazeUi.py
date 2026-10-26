@@ -94,8 +94,9 @@ class MazeUi:
             y += y_increment
 
     def initializeMaze(self):
-        self.maze: MazeGenerator = MazeGenerator((self.width, self.height))
-        self.maze.generate()
+        seed = self.config.seed if self.current_level == 0 else 0
+        self.maze: MazeGenerator = MazeGenerator((self.width, self.height),
+                                                 perfect=False, seed=seed)
 
     def createAllSquaresAndSavingThem(self, x_limit):
         x = 5
