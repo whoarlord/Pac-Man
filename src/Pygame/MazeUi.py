@@ -208,8 +208,8 @@ class MazeUi:
                            / self.height) / division)
         target_pixels = self.calculate_pixels_tuple(entity.get_coordinates())
         actual_pixels = list(entity.get_pixels())
-        # print(f"target_pixels: {target_pixels}")
-        # print(f"actual_pixels: {actual_pixels}")
+        print(f"target_pixels: {target_pixels}")
+        print(f"actual_pixels: {actual_pixels}")
         if (entity.current_direction == MovingDirection.MOVING_DOWN):
             actual_pixels[1] += y_increment
             if (actual_pixels[1] > target_pixels[1]):
@@ -226,10 +226,10 @@ class MazeUi:
             actual_pixels[0] += x_increment
             if (actual_pixels[0] > target_pixels[0]):
                 actual_pixels[0] = target_pixels[0]
-        # print(f"actual_pixels: {actual_pixels}")
+        print(f"actual_pixels: {actual_pixels}")
         entity.set_pixels(tuple(actual_pixels))
         if (entity.get_pixels() == target_pixels):
-            # print("not moving")
+            print("not moving")
             entity.set_current_direction(MovingDirection.NOT_MOVING)
 
     def next_level(self):
@@ -462,11 +462,11 @@ class MazeUi:
                 self.next_level()
             if time_counter >= movement_interval:
                 if self.player.current_direction == MovingDirection.NOT_MOVING:
-                    self.player.update_player_direction()
+                    self.player.update_direction()
                 if self.player.current_direction != MovingDirection.NOT_MOVING:
                     self.calculate_next_movement(self.player)
                     if self.player.current_direction == MovingDirection.NOT_MOVING:
-                        self.player.update_player_direction()
+                        self.player.update_direction()
                 player_pos = (self.player.x, self.player.y)
                 for ghost in self.ghosts:
                     if ghost.current_direction != MovingDirection.NOT_MOVING:

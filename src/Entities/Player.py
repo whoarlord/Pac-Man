@@ -65,6 +65,12 @@ class Player(MovementEntity):
 
     def get_moving_image(self):
         return self.images.get(self.current_direction)
+    
+    def update_direction(self) -> None:
+        if self.try_move_player(self.desired_direction):
+            self.current_direction = self.desired_direction
+        elif not self.try_move_player(self.current_direction):
+            self.current_direction = MovingDirection.NOT_MOVING
 
 
 if __name__ == "__main__":
