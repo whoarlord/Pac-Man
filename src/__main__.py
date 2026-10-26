@@ -1,7 +1,9 @@
 import sys
-from .Config.ConfigParser import ConfigParser
-from . import EntityFactory, MazeUi, EntitiesAdapter
-from .Pygame.Menu import MainMenu
+from src.Config.ConfigParser import ConfigParser
+from src.Entities.EntityFactory import EntityFactory
+from src.Pygame.MazeUi import MazeUi
+from src.Pygame.EntitiesAdapter import EntitiesAdapter
+from src.Pygame.Menu import MainMenu
 
 
 if __name__ == '__main__':
@@ -22,7 +24,8 @@ if __name__ == '__main__':
     menu = MainMenu(mazeUi.screen, parser.config)
     menu.run()
 
-    entityAdapter = EntitiesAdapter(mazeUi.cell_size)
+    entityAdapter = EntitiesAdapter((int(mazeUi.cell_size[0]),
+                                     int(mazeUi.cell_size[1])))
     mazeUi.entity_factory = entityFactory
     mazeUi.entity_adapter = entityAdapter
 

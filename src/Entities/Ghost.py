@@ -21,7 +21,7 @@ class Ghost(MovementEntity):
         PINK = 'pink'
 
     def __init__(self, x: int, y: int, x_pixel: int,
-                 y_pixel: int, image: Surface | None,
+                 y_pixel: int, image: Surface,
                  can_move: Callable[
                      [tuple[int, int], tuple[int, int]], bool],
                  color: GhostColor) -> None:
@@ -32,14 +32,14 @@ class Ghost(MovementEntity):
         self.spawn_x = x
         self.spawn_y = y
 
-    def set_image(self, image: Surface):
+    def set_image(self, image: Surface) -> None:
         self.image = image
 
     def respawn(self) -> None:
         self.x = self.spawn_x
         self.y = self.spawn_y
 
-    def _get_neighbors(self, cell: tuple[int, int]):
+    def _get_neighbors(self, cell: tuple[int, int]) -> list[tuple[int, int]]:
         """Return the walkable cells next to cell.
 
         The cells are checked in the order up, down, left, right, and the
@@ -59,7 +59,8 @@ class Ghost(MovementEntity):
                 result.append(candidate)
         return result
 
-    def _get_distances(self, start: tuple[int, int]):
+    def _get_distances(self, start: tuple[int, int]
+                       ) -> dict[tuple[int, int], int]:
         """Return the number of steps from start to every reachable cell.
 
         It uses BFS: cells are explored in rings, first the ones 1 step
@@ -81,7 +82,8 @@ class Ghost(MovementEntity):
                     queue.append(neighbor)
         return distances
 
-    def _choose_cell(self, player_pos: tuple[int, int], chase: bool):
+    def _choose_cell(self, player_pos: tuple[int, int], chase: bool
+                     ) -> tuple[int, int]:
         """Return the neighbouring cell the ghost should move to.
 
         It computes the distance from player_pos to every cell and looks
@@ -150,119 +152,3 @@ class Ghost(MovementEntity):
 
         cell = self._choose_cell(player_pos, False)
         self._move_to(cell)
-
-
-if __name__ == "__main__":
-    # Test map (5 columns x 3 rows). The cells marked with # are closed
-    # off: they are surrounded by walls, so nobody can enter them.
-    #
-    #    x: 0 1 2 3 4
-    # y=0   . . . . .
-    # y=1   . . # . .
-    # y=2   . . # . .
-    #
-    # Each wall is stored once, as a pair of neighbouring cells.
-    walls = {
-        ((2, 0), (2, 1)), ((1, 1), (2, 1)), ((2, 1), (3, 1)),
-        ((2, 1), (2, 2)), ((1, 2), (2, 2)), ((2, 2), (3, 2)),
-    }
-
-    def can_move(origin: tuple[int, int], target: tuple[int, int]) -> bool:
-        """Fake map: False if a wall is in the way or target is outside."""
-
-        x, y = target
-        if x < 0 or x > 4 or y < 0 or y > 2:
-            return False
-        if (origin, target) in walls or (target, origin) in walls:
-            return False
-        return True
-
-    color = Ghost.GhostColor.RED
-    ghost = Ghost(0, 1, color)
-
-    # _get_neighbors: walls and cells outside the map are left out.
-    tests = [
-        ((1, 1), [(1, 0), (1, 2), (0, 1)]),
-        ((0, 0), [(0, 1), (1, 0)]),
-        ((3, 1), [(3, 0), (3, 2), (4, 1)]),
-        ((4, 2), [(4, 1), (3, 2)]),
-    ]
-
-    for cell, expected in tests:
-        result = ghost._get_neighbors(cell, can_move)
-        status = "OK" if result == expected else "FAIL"
-        print(f"{status} cell={cell} result={result} expected={expected}")
-
-    # _get_distances: BFS from the player at (4, 1).
-    expected_distances = {
-        (4, 1): 0, (4, 0): 1, (4, 2): 1, (3, 1): 1,
-        (3, 0): 2, (3, 2): 2, (2, 0): 3, (1, 0): 4,
-        (0, 0): 5, (1, 1): 5, (0, 1): 6, (1, 2): 6,
-        (0, 2): 7,
-    }
-    distances = ghost._get_distances((4, 1), can_move)
-    status = "OK" if distances == expected_distances else "FAIL"
-    print(f"{status} distances={distances}")
-
-    # _choose_cell: closest or farthest neighbour, ties go to the first.
-    choose_tests = [
-        ((0, 1), True, (0, 0)),
-        ((0, 1), False, (0, 2)),
-        ((1, 1), True, (1, 0)),
-        ((1, 1), False, (1, 2)),
-    ]
-
-    for pos, chase, expected in choose_tests:
-        g = Ghost(pos[0], pos[1], color)
-        result = g._choose_cell((4, 1), can_move, chase)
-        status = "OK" if result == expected else "FAIL"
-        print(f"{status} ghost={pos} chase={chase} "
-              f"result={result} expected={expected}")
-
-    # _move_to: one test for each direction.
-    move_tests = [
-        ((1, 1), (1, 0)),
-        ((1, 1), (1, 2)),
-        ((1, 1), (0, 1)),
-        ((3, 1), (4, 1)),
-    ]
-
-    for start, cell in move_tests:
-        g = Ghost(start[0], start[1], color)
-        g._move_to(cell)
-        result = (g.x, g.y)
-        status = "OK" if result == cell else "FAIL"
-        print(f"{status} start={start} cell={cell} result={result}")
-
-    # catch_player and run_from_player: one step each.
-    g = Ghost(0, 1, color)
-    g.catch_player((4, 1), can_move)
-    status = "OK" if (g.x, g.y) == (0, 0) else "FAIL"
-    print(f"{status} catch one step: {(g.x, g.y)} expected (0, 0)")
-
-    g = Ghost(0, 1, color)
-    g.run_from_player((4, 1), can_move)
-    status = "OK" if (g.x, g.y) == (0, 2) else "FAIL"
-    print(f"{status} run one step: {(g.x, g.y)} expected (0, 2)")
-
-    # catch_player six times in a row: the ghost goes around the wall.
-    g = Ghost(0, 1, color)
-    path = []
-    for _ in range(6):
-        g.catch_player((4, 1), can_move)
-        path.append((g.x, g.y))
-    expected_path = [(0, 0), (1, 0), (2, 0), (3, 0), (3, 1), (4, 1)]
-    status = "OK" if path == expected_path else "FAIL"
-    print(f"{status} path={path}")
-
-    # A wall between two normal cells: (3, 0) and (3, 1) are both free,
-    # but now they are not connected, so the ghost must go through (4, 0).
-    walls.add(((3, 0), (3, 1)))
-    g = Ghost(0, 1, color)
-    path = []
-    for _ in range(6):
-        g.catch_player((4, 1), can_move)
-        path.append((g.x, g.y))
-    expected_path = [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0), (4, 1)]
-    status = "OK" if path == expected_path else "FAIL"
-    print(f"{status} wall between normal cells: path={path}")

@@ -1,7 +1,6 @@
 from pygame import Surface
 from typing import Callable, Tuple
 from enum import Enum
-import pygame
 
 
 class MovingDirection(Enum):
@@ -44,7 +43,7 @@ class MovementEntity():
             MovingDirection.MOVING_UP: self.try_move_up
         }
 
-    def set_image(self, image: Surface):
+    def set_image(self, image: Surface) -> None:
         self.image = image
 
     def move_up(self) -> None:
@@ -63,12 +62,9 @@ class MovementEntity():
         """Move the entity one cell to the right."""
         self.x = self.x + 1
 
-    def get_moving_image(self):
-        return ''
-
     def try_move_player(self, direction: MovingDirection) -> bool:
         if (direction != MovingDirection.NOT_MOVING):
-            self.try_move_mapper.get(direction)()
+            self.try_move_mapper[direction]()
         return self.desired_direction != MovingDirection.NOT_MOVING
 
     def update_direction(self) -> None:
@@ -93,16 +89,17 @@ class MovementEntity():
         if (self.can_move((self.x, self.y), self.next_pos_right())):
             self.move_right()
 
-    def set_current_direction(self, current_direction: MovingDirection):
+    def set_current_direction(self,
+                              current_direction: MovingDirection) -> None:
         if (isinstance(current_direction, MovingDirection)):
             self.current_direction = current_direction
 
     def get_pixels(self) -> Tuple[int, int]:
         return (self.x_pixel, self.y_pixel)
 
-    def set_pixels(self, pixels: Tuple[int, int]):
+    def set_pixels(self, pixels: Tuple[int, int]) -> None:
         if (isinstance(pixels[0], int)
-                or isinstance(pixels[1], int)):
+                and isinstance(pixels[1], int)):
             self.x_pixel = pixels[0]
             self.y_pixel = pixels[1]
 

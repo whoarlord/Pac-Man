@@ -36,11 +36,11 @@ clean:
 	rm -rf $(TOCLEAN)
 
 lint:
-	flake8
-	mypy $(MYPYFLAGS)
+	flake8 src
+	mypy $(MYPYFLAGS) src
 
 lint-strict:
-	flake8
-	mypy --strict --ignore-missing-imports
+	flake8 src
+	mypy --strict --ignore-missing-imports src
 
 SILENT: all install run debug build install clean lint lint-strict

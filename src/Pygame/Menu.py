@@ -2,6 +2,7 @@ import sys
 import os
 import json
 import pygame
+from typing import Any
 from src.Config.ConfigParser import GameConfigModel
 
 
@@ -46,7 +47,6 @@ class MainMenu:
         lines = [
             "CONTROLS:",
             "• Use ARROW KEYS or W/A/S/D to move Pac-Man.",
-            "• Press R to reset Pac-Man's position.",
             "",
             "RULES:",
             "• Eat all the small Pac-gums to clear the level.",
@@ -66,9 +66,9 @@ class MainMenu:
         x_back = (screen_width - back_surface.get_width()) // 2
         self.screen.blit(back_surface, (x_back, 850))
 
-    def _get_scores(self, element) -> list:
+    def _get_scores(self, element: dict[str, Any]) -> int:
         if isinstance(element, dict):
-            return element.get("score", 0)
+            return int(element.get("score", 0))
         return 0
 
     def _draw_highscores(self) -> None:
@@ -154,6 +154,7 @@ class MainMenu:
                                                len(self.options))
                     elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                         return self._execute_option()
+        return None
 
     def run(self) -> None:
         clock = pygame.time.Clock()

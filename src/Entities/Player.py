@@ -1,6 +1,6 @@
 from pygame import Surface
 from typing import Callable
-from src.Entities import MovingDirection, MovementEntity
+from src.Entities.MovementEntity import MovementEntity, MovingDirection
 
 
 class Player(MovementEntity):
@@ -8,7 +8,7 @@ class Player(MovementEntity):
 
     def __init__(self, x: int, y: int,
                  x_pixel: int, y_pixel: int,
-                 image: Surface | None,
+                 image: Surface,
                  can_move: Callable[
                      [tuple[int, int], tuple[int, int]], bool],
                  points_per_pacgum: int, points_per_super_pacgum: int,
@@ -64,35 +64,8 @@ class Player(MovementEntity):
     def lose_life(self) -> None:
         self.lives = max(0, self.lives - 1)
 
-    def get_moving_image(self):
-        return self.images.get(self.current_direction)
-
     def update_direction(self) -> None:
         if self.try_move_player(self.desired_direction):
             self.current_direction = self.desired_direction
         elif not self.try_move_player(self.current_direction):
             self.current_direction = MovingDirection.NOT_MOVING
-
-
-if __name__ == "__main__":
-    player = Player(5, 4)
-    print(f"coordinate x: {player.x}, coordinate y: {player.y}")
-    test = player.next_pos_up()
-    print(f"test = {test}")
-    print(f"coordinate x: {player.x}, coordinate y: {player.y}")
-    player.move_up()
-    print(f"coordinate x: {player.x}, coordinate y: {player.y}")
-    print("-----------------------------------------")
-    print(f"initial score: {player.score}")
-    player.add_pacgum_points()
-    print(f"player after eating pacgum: {player.score}")
-    player.add_super_pacgum_points()
-    print(f"player after eating super_pacgum: {player.score}")
-    player.add_ghost_points()
-    print(f"player after eating ghost: {player.score}")
-    print("-----------------------------------------")
-    print(f"is the player powerd up? : {player.is_powered_up}")
-    player.power_up()
-    print(f"is the player powerd up? : {player.is_powered_up}")
-    player.power_down()
-    print(f"is the player powerd up? : {player.is_powered_up}")
