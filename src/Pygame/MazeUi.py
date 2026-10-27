@@ -34,20 +34,29 @@ class MazeUi:
         self.margin = 5
         self.thick = 3
         self.lines_color = (255, 255, 255)
-        self.cell_size: Tuple[int, int] = self.calculate_cell_size()
+        self.cell_size: Tuple[float, float] = self.calculate_cell_size()
         self.initializeMaze()
         self.screen: pygame.Surface = pygame.display.set_mode(
             (self.window_width, self.window_height))
         self.screen.fill("black")
-        self.player: Player | None = None
+        self.player: Player
         self.ghosts: list[Ghost] = []
         self.pacgums: list[Pacgum] = []
         self.super_pacgums: list[Pacgum] = []
-        self.entity_factory = None
-        self.entity_adapter = None
+        self.entity_factory: EntityFactory
+        self.entity_adapter: EntitiesAdapter
         self.power_up_timer = 0
         self.POWER_UP_DURATION = 7000
         self.level_timer = 0
+        self.paused = False
+        self.pause_options = ["Resume", "Return to Main Menu"]
+        self.pause_index = 0
+        self.title_font = pygame.font.Font(None, 80)
+        self.pause_veil = pygame.Surface(
+            (self.window_width, self.window_height))
+        self.pause_veil.set_alpha(150)
+        self.pause_veil.fill((0, 0, 0))
+        self.back_to_menu = False
 
     def load_level(self, level_index: int) -> None:
         self.current_level = level_index
@@ -56,15 +65,17 @@ class MazeUi:
         self.cell_size = self.calculate_cell_size()
         self.initializeMaze()
 
-    def calculate_cell_size(self):
+    def calculate_cell_size(self) -> Tuple[float, float]:
         cell_width = (self.window_width - self.margin) / self.width
         cell_height = (self.maze_height - self.margin) / self.height
         return (cell_width, cell_height)
 
-    def saveImage(self, image, name):
+    def saveImage(self, image: pygame.Surface, name: str) -> None:
         pygame.image.save(image, name)
 
-    def createRect(self, init_x, init_y, finish_x, finish_y, N, E, W, S):
+    def createRect(self, init_x: float, init_y: float, finish_x: float,
+                   finish_y: float, N: bool, E: bool, W: bool,
+                   S: bool) -> None:
         if (N):
             pygame.draw.line(self.screen, self.lines_color,
                              (init_x, init_y),
@@ -83,18 +94,18 @@ class MazeUi:
                              (finish_x, finish_y), self.thick)
 
     def createMazeBlock(self, cell: int, x: int, y: int,
-                        x_increment: int, y_increment: int):
+                        x_increment: int, y_increment: int) -> None:
         N = bool(cell & 1)
         E = bool(cell & 2)
         S = bool(cell & 4)
         W = bool(cell & 8)
         self.createRect(x, y, x + x_increment, y + y_increment, N, E, W, S)
 
-    def makeMaze(self, x_cells, y_cells):
+    def makeMaze(self, x_cells: int, y_cells: int) -> None:
         x = self.margin
         y = self.margin
-        x_increment = (self.window_width - self.margin) / x_cells
-        y_increment = (self.maze_height - self.margin) / y_cells
+        x_increment = (self.window_width - self.margin) // x_cells
+        y_increment = (self.maze_height - self.margin) // y_cells
         for i in range(y_cells):
             for j in range(x_cells):
                 actual_cell = self.maze.maze[i][j]
@@ -104,12 +115,12 @@ class MazeUi:
             x = self.margin
             y += y_increment
 
-    def initializeMaze(self):
+    def initializeMaze(self) -> None:
         seed = self.config.seed if self.current_level == 0 else 0
         self.maze: MazeGenerator = MazeGenerator((self.width, self.height),
                                                  perfect=False, seed=seed)
 
-    def createAllSquaresAndSavingThem(self, x_limit):
+    def createAllSquaresAndSavingThem(self, x_limit: int) -> None:
         x = 5
         y = 5
         increment = 50
@@ -126,13 +137,13 @@ class MazeUi:
                 x = 5
                 y += increment + margin
 
-    def place_player(self, player: pygame.Surface):
+    def place_player(self, player: pygame.Surface) -> None:
         x = int((self.width - 1) / 2)
         y = int((self.height - 1) / 2)
         self.place_element(player, self.calculate_pixels_tuple((x, y)))
 
     def place_element(self, element: pygame.Surface,
-                      coordinates: Tuple[int, int]):
+                      coordinates: Tuple[int, int]) -> None:
         self.screen.blit(element, self.calculate_rect_for_cell(coordinates))
 
     def calculate_rect_for_cell(self, cell: Tuple[int, int]) -> pygame.Rect:
@@ -161,7 +172,7 @@ class MazeUi:
             wall = 8
         else:
             return False
-        return (actual_cell & wall) == 0
+        return bool((actual_cell & wall) == 0)
 
     def draw_hud(self) -> None:
         remaining = max(0, self.config.level_max_time
@@ -178,7 +189,7 @@ class MazeUi:
             y = self.maze_height + (self.hud_height - image.get_height()) // 2
             self.screen.blit(image, (x, y))
 
-    def print_map(self):
+    def print_map(self) -> None:
         self.screen.fill("black")
         self.makeMaze(self.width, self.height)
         self.draw_pacgums()
@@ -190,7 +201,8 @@ class MazeUi:
         self.draw_hud()
         self.check_collisions()
 
-    def calculate_pixels_tuple(self, coordinates: Tuple[int, int]):
+    def calculate_pixels_tuple(self, coordinates: Tuple[int, int]
+                               ) -> Tuple[int, int]:
         x_increment = (self.window_width - self.margin) / self.width
         y_increment = (self.maze_height - self.margin) / self.height
         return (self.margin + int(x_increment * (coordinates[0])),
@@ -211,7 +223,7 @@ class MazeUi:
             img = self.entity_adapter.makeYellowGhostImage(scared)
             ghost.set_image(img)
 
-    def calculate_next_movement(self, entity: MovementEntity):
+    def calculate_next_movement(self, entity: MovementEntity) -> None:
         division: int = 10
         if (isinstance(entity, Player)):
             division = 5
@@ -225,8 +237,6 @@ class MazeUi:
                            / self.height) / division)
         target_pixels = self.calculate_pixels_tuple(entity.get_coordinates())
         actual_pixels = list(entity.get_pixels())
-        print(f"target_pixels: {target_pixels}")
-        print(f"actual_pixels: {actual_pixels}")
         if (entity.current_direction == MovingDirection.MOVING_DOWN):
             actual_pixels[1] += y_increment
             if (actual_pixels[1] > target_pixels[1]):
@@ -243,19 +253,19 @@ class MazeUi:
             actual_pixels[0] += x_increment
             if (actual_pixels[0] > target_pixels[0]):
                 actual_pixels[0] = target_pixels[0]
-        print(f"actual_pixels: {actual_pixels}")
-        entity.set_pixels(tuple(actual_pixels))
+        entity.set_pixels((actual_pixels[0], actual_pixels[1]))
         if (entity.get_pixels() == target_pixels):
-            print("not moving")
             entity.set_current_direction(MovingDirection.NOT_MOVING)
 
-    def next_level(self):
+    def next_level(self) -> None:
         if self.current_level + 1 >= len(self.config.levels):
             self.running = False
             return
         self.load_level(self.current_level + 1)
-        self.entity_adapter = EntitiesAdapter(self.cell_size)
-        self.player.set_image(self.entity_adapter.makePlayerImage(MovingDirection.NOT_MOVING))
+        self.entity_adapter = EntitiesAdapter((int(self.cell_size[0]),
+                                               int(self.cell_size[1])))
+        self.player.set_image(self.entity_adapter.makePlayerImage(
+            MovingDirection.NOT_MOVING))
         self.reset_player_position()
         self.player.power_down()
         self.power_up_timer = 0
@@ -330,7 +340,7 @@ class MazeUi:
             x, y = cell
             if not (0 <= x < self.width and 0 <= y < self.height):
                 return False
-            return self.maze.maze[y][x] != 15
+            return bool(self.maze.maze[y][x] != 15)
 
         free_cells = 0
         for x in range(self.width):
@@ -432,28 +442,50 @@ class MazeUi:
                     print(f"¡Te han tocado! Vidas restantes: {lives}")
                     break
 
-    def bind_events(self):
+    def bind_events(self) -> None:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
             elif event.type == pygame.KEYDOWN:
-                if event.key in self.KEY_DIRECTIONS:
+                if self.paused:
+                    self.handle_pause_key(event.key)
+                elif event.key in (pygame.K_ESCAPE, pygame.K_p):
+                    self.paused = True
+                    self.pause_index = 0
+                elif event.key in self.KEY_DIRECTIONS:
                     self.player.desired_direction = self.KEY_DIRECTIONS[
                         event.key]
-                elif event.key == pygame.K_c:
-                    self.player.power_up()
-                elif event.key == pygame.K_c:
-                    self.player.power_up()
-                elif event.key == pygame.K_r:
-                    self.reset_player_position()
-                elif event.key == pygame.K_p:
-                    self.player.add_pacgum_points()
-                    print(self.player.score)
-                elif event.key == pygame.K_l:
-                    self.player.lose_life()
-                    print(self.player.lives)
 
-    def event_loop(self):
+    def handle_pause_key(self, key: int) -> None:
+        if key in (pygame.K_UP, pygame.K_w):
+            self.pause_index = ((self.pause_index - 1)
+                                % len(self.pause_options))
+        elif key in (pygame.K_DOWN, pygame.K_s):
+            self.pause_index = ((self.pause_index + 1)
+                                % len(self.pause_options))
+        elif key in (pygame.K_ESCAPE, pygame.K_p):
+            self.paused = False
+        elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+            self.paused = False
+            if self.pause_index == 1:
+                self.back_to_menu = True
+                self.running = False
+
+    def draw_pause_menu(self) -> None:
+        self.screen.blit(self.pause_veil, (0, 0))
+        title = self.title_font.render("PAUSED", True, (255, 238, 0))
+        x_title = (self.window_width - title.get_width()) // 2
+        self.screen.blit(title, (x_title, 300))
+        for i, option in enumerate(self.pause_options):
+            if i == self.pause_index:
+                color = (255, 255, 255)
+            else:
+                color = (100, 100, 100)
+            text = self.font.render(option, True, color)
+            x = (self.window_width - text.get_width()) // 2
+            self.screen.blit(text, (x, 450 + i * 70))
+
+    def event_loop(self) -> None:
         clock = pygame.time.Clock()
         movement_interval = 35
         time_counter = 0
@@ -461,6 +493,11 @@ class MazeUi:
         while self.running:
             self.print_map()
             dt = clock.tick(60)
+            self.bind_events()
+            if self.paused:
+                self.draw_pause_menu()
+                pygame.display.flip()
+                continue
             time_counter += dt
             if self.player.is_powered_up:
                 self.power_up_timer += dt
@@ -473,7 +510,6 @@ class MazeUi:
                 self.lose_life_and_reset()
                 print(f"Vidas restantes: {self.player.lives}")
                 self.level_timer = 0
-            self.bind_events()
             self.eat_pacgums()
             if not self.pacgums:
                 self.next_level()
@@ -482,7 +518,8 @@ class MazeUi:
                     self.player.update_direction()
                 if self.player.current_direction != MovingDirection.NOT_MOVING:
                     self.calculate_next_movement(self.player)
-                    if self.player.current_direction == MovingDirection.NOT_MOVING:
+                    if self.player.current_direction == (MovingDirection.
+                                                         NOT_MOVING):
                         self.player.update_direction()
                 player_pos = (self.player.x, self.player.y)
                 for ghost in self.ghosts:
@@ -495,17 +532,22 @@ class MazeUi:
                             ghost.catch_player(player_pos)
                 time_counter -= movement_interval
             pygame.display.flip()
-        pygame.quit()
 
+    def reset(self) -> None:
+        self.current_level = 0
+        self.width = self.config.levels[self.current_level].width
+        self.height = self.config.levels[self.current_level].height
+        self.cell_size = self.calculate_cell_size()
+        self.initializeMaze()
 
-if __name__ == '__main__':
-    # pygame setup
-    mazeUi = MazeUi(20, 20)
-    entityAdapter = EntitiesAdapter(mazeUi.cell_size)
-    mazeUi.player = Player(10, 10)
-    mazeUi.ghosts = [Ghost(0, 0, Ghost.GhostColor.RED)]
-    mazeUi.player_image = entityAdapter.makePlayerImage()
-    mazeUi.ghost_images = {
-        Ghost.GhostColor.RED: entityAdapter.makeRedGhostImage()
-    }
-    mazeUi.event_loop()
+        self.ghosts = []
+        self.pacgums = []
+        self.super_pacgums = []
+
+        self.power_up_timer = 0
+        self.level_timer = 0
+        self.paused = False
+        self.pause_index = 0
+        self.back_to_menu = False
+
+        self.screen.fill("black")
