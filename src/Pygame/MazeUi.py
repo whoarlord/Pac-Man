@@ -464,9 +464,9 @@ class MazeUi:
                 color = (255, 255, 255)
             else:
                 color = (100, 100, 100)
-        text = self.font.render(option, True, color)
-        x = (self.window_width - text.get_width()) // 2
-        self.screen.blit(text, (x, 450 + i * 70))
+            text = self.font.render(option, True, color)
+            x = (self.window_width - text.get_width()) // 2
+            self.screen.blit(text, (x, 450 + i * 70))
 
     def event_loop(self) -> None:
         clock = pygame.time.Clock()
