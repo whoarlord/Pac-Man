@@ -183,6 +183,11 @@ class MazeUi:
             y = self.maze_height + (self.hud_height - image.get_height()) // 2
             self.screen.blit(image, (x, y))
 
+    def draw_icons(self) -> None:
+        if (self.player.is_invincible()):
+            img = self.entity_adapter.make_invincible_icon()
+            self.screen.blit(img, self.calculate_rect_for_cell((0, 0)))
+
     def print_map(self) -> None:
         self.screen.fill("black")
         self.makeMaze(self.width, self.height)
@@ -194,6 +199,7 @@ class MazeUi:
                                ghost.get_pixels())
         self.draw_hud()
         self.check_collisions()
+        self.draw_icons()
 
     def calculate_pixels_tuple(self, coordinates: Tuple[int, int]
                                ) -> Tuple[int, int]:
@@ -405,6 +411,8 @@ class MazeUi:
             ghost.set_current_direction(MovingDirection.NOT_MOVING)
 
     def check_collisions(self) -> None:
+        if (self.player.is_invincible()):
+            return
         width_c, height_c = self.cell_size
 
         tolerance = 6
@@ -449,6 +457,8 @@ class MazeUi:
                 elif event.key in self.KEY_DIRECTIONS:
                     self.player.desired_direction = self.KEY_DIRECTIONS[
                         event.key]
+                elif event.key == pygame.K_i:
+                    self.player.change_invincibility()
 
     def handle_pause_key(self, key: int) -> None:
         if key in (pygame.K_UP, pygame.K_w):
