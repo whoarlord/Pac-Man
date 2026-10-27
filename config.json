@@ -2,8 +2,14 @@
 {
   "highscore_filename": "highscores.json",
   "levels": [
-    {"width": 16, "height": 16},
-    {"width": 25, "height": 25}
+    {
+      "width": 25,
+      "height": 25
+    },
+    {
+      "width": 16,
+      "height": 16
+    }
   ],
   "lives": 3,
   "pacgum": 1,

@@ -7,7 +7,7 @@ class EntitiesAdapter:
     def __init__(self, entity_dimensions: Tuple[int, int]) -> None:
         self.img_route = "src/img/"
         self.entity_dimensions = entity_dimensions
-        self.pacman_state = 1
+        self.pacman_state = 5
         self.calls_counter: int = 0
 
     def _get_pacman_image(self, direction: MovingDirection) -> str:
@@ -29,22 +29,33 @@ class EntitiesAdapter:
         img = self._get_pacman_image(direction)
         if self.calls_counter >= 2:
             self.calls_counter = 0
-            if (self.pacman_state == 4):
-                self.pacman_state = 1
+            if (self.pacman_state == 1):
+                self.pacman_state = 5
             else:
-                self.pacman_state += 1
+                self.pacman_state -= 1
         else:
             self.calls_counter += 1
         return self._load_entity(img)
 
-    def makeRedGhostImage(self) -> pygame.Surface:
+    def makeScaredGhostImage(self):
+        return self._load_entity(f"{self.img_route}scared_ghost.png")
+
+    def makeRedGhostImage(self, scared: bool = False):
+        if scared:
+            return self.makeScaredGhostImage()
         return self._load_entity(f"{self.img_route}red_ghost.png")
 
-    def makeYellowGhostImage(self) -> pygame.Surface:
+    def makeYellowGhostImage(self, scared: bool = False):
+        if scared:
+            return self.makeScaredGhostImage()
         return self._load_entity(f"{self.img_route}yellow_ghost.png")
 
-    def makeBlueGhostImage(self) -> pygame.Surface:
+    def makeBlueGhostImage(self, scared: bool = False):
+        if scared:
+            return self.makeScaredGhostImage()
         return self._load_entity(f"{self.img_route}blue_ghost.png")
 
-    def makePinkGhostImage(self) -> pygame.Surface:
+    def makePinkGhostImage(self, scared: bool = False):
+        if scared:
+            return self.makeScaredGhostImage()
         return self._load_entity(f"{self.img_route}pink_ghost.png")
