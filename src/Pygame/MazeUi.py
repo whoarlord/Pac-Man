@@ -196,12 +196,29 @@ class MazeUi:
         return (self.margin + int(x_increment * (coordinates[0])),
                 self.margin + int(y_increment * (coordinates[1])))
 
+    def make_ghost_by_color(self, ghost: Ghost):
+        scared: bool = self.player.is_powered_up
+        if ghost.color == Ghost.GhostColor.RED:
+            img = self.entity_adapter.makeRedGhostImage(scared)
+            ghost.set_image(img)
+        elif ghost.color == Ghost.GhostColor.BLUE:
+            img = self.entity_adapter.makeBlueGhostImage(scared)
+            ghost.set_image(img)
+        elif ghost.color == Ghost.GhostColor.PINK:
+            img = self.entity_adapter.makePinkGhostImage(scared)
+            ghost.set_image(img)
+        elif ghost.color == Ghost.GhostColor.YELLOW:
+            img = self.entity_adapter.makeYellowGhostImage(scared)
+            ghost.set_image(img)
+
     def calculate_next_movement(self, entity: MovementEntity):
         division: int = 10
         if (isinstance(entity, Player)):
             division = 5
             img = self.entity_adapter.makePlayerImage(entity.current_direction)
             entity.set_image(img)
+        else:
+            self.make_ghost_by_color(entity)
         x_increment = int(((self.window_width - self.margin)
                            / self.width) / division)
         y_increment = int(((self.maze_height - self.margin)
