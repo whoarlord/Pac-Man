@@ -102,18 +102,12 @@ class MazeUi:
         self.createRect(x, y, x + x_increment, y + y_increment, N, E, W, S)
 
     def makeMaze(self, x_cells: int, y_cells: int) -> None:
-        x = self.margin
-        y = self.margin
-        x_increment = (self.window_width - self.margin) // x_cells
-        y_increment = (self.maze_height - self.margin) // y_cells
         for i in range(y_cells):
             for j in range(x_cells):
-                actual_cell = self.maze.maze[i][j]
-                self.createMazeBlock(actual_cell, x, y,
-                                     x_increment, y_increment)
-                x += x_increment
-            x = self.margin
-            y += y_increment
+                x0, y0 = self.calculate_pixels_tuple((j, i))
+                x1, y1 = self.calculate_pixels_tuple((j + 1, i + 1))
+                self.createMazeBlock(self.maze.maze[i][j], x0, y0,
+                                     x1 - x0, y1 - y0)
 
     def initializeMaze(self) -> None:
         seed = self.config.seed if self.current_level == 0 else 0

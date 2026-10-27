@@ -7,7 +7,7 @@ class EntitiesAdapter:
     def __init__(self, entity_dimensions: Tuple[int, int]) -> None:
         self.img_route = "src/img/"
         self.entity_dimensions = entity_dimensions
-        self.pacman_state = 1
+        self.pacman_state = 5
         self.calls_counter: int = 0
 
     def _get_pacman_image(self, direction: MovingDirection) -> str:
@@ -29,10 +29,10 @@ class EntitiesAdapter:
         img = self._get_pacman_image(direction)
         if self.calls_counter >= 2:
             self.calls_counter = 0
-            if (self.pacman_state == 5):
-                self.pacman_state = 1
+            if (self.pacman_state == 1):
+                self.pacman_state = 5
             else:
-                self.pacman_state += 1
+                self.pacman_state -= 1
         else:
             self.calls_counter += 1
         return self._load_entity(img)
