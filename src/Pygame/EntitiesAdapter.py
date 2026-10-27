@@ -59,3 +59,6 @@ class EntitiesAdapter:
         if scared:
             return self.makeScaredGhostImage()
         return self._load_entity(f"{self.img_route}pink_ghost.png")
+
+    def make_invincible_icon(self):
+        return self._load_entity(f"{self.img_route}invincible_icon_low.png")
