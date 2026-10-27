@@ -1,4 +1,5 @@
 import sys
+import pygame
 from src.Config.ConfigParser import ConfigParser
 from src.Entities.EntityFactory import EntityFactory
 from src.Pygame.MazeUi import MazeUi
@@ -16,18 +17,30 @@ if __name__ == '__main__':
         print(f"Received: '{config_path}', expected a '.json' file",
               file=sys.stderr)
         sys.exit(1)
+
     parser = ConfigParser(config_path)
     entityFactory = EntityFactory()
 
     mazeUi = MazeUi(parser.config)
 
     menu = MainMenu(mazeUi.screen, parser.config)
-    menu.run()
+    while True:
+        mazeUi.back_to_menu = False
+        menu.state = "MAIN"
+        menu.run()
 
-    entityAdapter = EntitiesAdapter((int(mazeUi.cell_size[0]),
-                                     int(mazeUi.cell_size[1])))
-    mazeUi.entity_factory = entityFactory
-    mazeUi.entity_adapter = entityAdapter
+        entityAdapter = EntitiesAdapter((int(mazeUi.cell_size[0]),
+                                         int(mazeUi.cell_size[1])))
+        mazeUi.entity_factory = entityFactory
+        mazeUi.entity_adapter = entityAdapter
 
-    mazeUi.setup_entities()
-    mazeUi.event_loop()
+        mazeUi.load_level(0)
+        mazeUi.setup_entities()
+
+        mazeUi.event_loop()
+
+        if not mazeUi.back_to_menu:
+            break
+
+    pygame.quit()
+    sys.exit(1)

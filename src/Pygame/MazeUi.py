@@ -48,6 +48,15 @@ class MazeUi:
         self.power_up_timer = 0
         self.POWER_UP_DURATION = 7000
         self.level_timer = 0
+        self.paused = False
+        self.pause_options = ["Resume", "Return to Main Menu"]
+        self.pause_index = 0
+        self.title_font = pygame.font.Font(None, 80)
+        self.pause_veil = pygame.Surface(
+            (self.window_width, self.window_height))
+        self.pause_veil.set_alpha(150)
+        self.pause_veil.fill((0, 0, 0))
+        self.back_to_menu = False
 
     def load_level(self, level_index: int) -> None:
         self.current_level = level_index
@@ -421,9 +430,43 @@ class MazeUi:
             if event.type == pygame.QUIT:
                 self.running = False
             elif event.type == pygame.KEYDOWN:
-                if event.key in self.KEY_DIRECTIONS:
+                if self.paused:
+                    self.handle_pause_key(event.key)
+                elif event.key in (pygame.K_ESCAPE, pygame.K_p):
+                    self.paused = True
+                    self.pause_index = 0
+                elif event.key in self.KEY_DIRECTIONS:
                     self.player.desired_direction = self.KEY_DIRECTIONS[
                         event.key]
+
+    def handle_pause_key(self, key: int) -> None:
+        if key in (pygame.K_UP, pygame.K_w):
+            self.pause_index = ((self.pause_index - 1)
+                                % len(self.pause_options))
+        elif key in (pygame.K_DOWN, pygame.K_s):
+            self.pause_index = ((self.pause_index + 1)
+                                % len(self.pause_options))
+        elif key in (pygame.K_ESCAPE, pygame.K_p):
+            self.paused = False
+        elif key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+            self.paused = False
+            if self.pause_index == 1:
+                self.back_to_menu = True
+                self.running = False
+
+    def draw_pause_menu(self) -> None:
+        self.screen.blit(self.pause_veil, (0, 0))
+        title = self.title_font.render("PAUSED", True, (255, 238, 0))
+        x_title = (self.window_width - title.get_width()) // 2
+        self.screen.blit(title, (x_title, 300))
+        for i, option in enumerate(self.pause_options):
+            if i == self.pause_index:
+                color = (255, 255, 255)
+            else:
+                color = (100, 100, 100)
+        text = self.font.render(option, True, color)
+        x = (self.window_width - text.get_width()) // 2
+        self.screen.blit(text, (x, 450 + i * 70))
 
     def event_loop(self) -> None:
         clock = pygame.time.Clock()
@@ -433,6 +476,11 @@ class MazeUi:
         while self.running:
             self.print_map()
             dt = clock.tick(60)
+            self.bind_events()
+            if self.paused:
+                self.draw_pause_menu()
+                pygame.display.flip()
+                continue
             time_counter += dt
             if self.player.is_powered_up:
                 self.power_up_timer += dt
@@ -445,7 +493,6 @@ class MazeUi:
                 self.lose_life_and_reset()
                 print(f"Vidas restantes: {self.player.lives}")
                 self.level_timer = 0
-            self.bind_events()
             self.eat_pacgums()
             if not self.pacgums:
                 self.next_level()
@@ -468,4 +515,3 @@ class MazeUi:
                             ghost.catch_player(player_pos)
                 time_counter -= movement_interval
             pygame.display.flip()
-        pygame.quit()
