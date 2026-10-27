@@ -101,7 +101,7 @@ class MainMenu:
                 name = entry.get("name", "UNKNOWN")[:10]
                 score = entry.get("score", 0)
 
-                line_text = f"{i + 1}. {name.upper():<12} {score:>6} pts"
+                line_text = f"{i + 1}. {name:<12} {score:>6} pts"
                 score_surface = self.font_text.render(line_text, True,
                                                       (255, 184, 174))
                 x_pos = (screen_width - score_surface.get_width()) // 2
