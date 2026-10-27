@@ -515,3 +515,22 @@ class MazeUi:
                             ghost.catch_player(player_pos)
                 time_counter -= movement_interval
             pygame.display.flip()
+
+    def reset(self) -> None:
+        self.current_level = 0
+        self.width = self.config.levels[self.current_level].width
+        self.height = self.config.levels[self.current_level].height
+        self.cell_size = self.calculate_cell_size()
+        self.initializeMaze()
+
+        self.ghosts = []
+        self.pacgums = []
+        self.super_pacgums = []
+
+        self.power_up_timer = 0
+        self.level_timer = 0
+        self.paused = False
+        self.pause_index = 0
+        self.back_to_menu = False
+
+        self.screen.fill("black")

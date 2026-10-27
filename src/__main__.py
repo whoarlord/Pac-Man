@@ -22,12 +22,13 @@ if __name__ == '__main__':
     entityFactory = EntityFactory()
 
     mazeUi = MazeUi(parser.config)
-
     menu = MainMenu(mazeUi.screen, parser.config)
+
     while True:
-        mazeUi.back_to_menu = False
         menu.state = "MAIN"
         menu.run()
+
+        mazeUi.reset()
 
         entityAdapter = EntitiesAdapter((int(mazeUi.cell_size[0]),
                                          int(mazeUi.cell_size[1])))
