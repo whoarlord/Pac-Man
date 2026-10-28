@@ -17,8 +17,8 @@ class EndScreenBase:
         self.font_options = pygame.font.Font(None, 50)
         self.font_text = pygame.font.Font(None, 36)
         self.running = True
-        self.show_error = False
-        self.error_message = "The name already exists. ¡Choose another one!"
+        self.confirm_overwrite = False
+        self.existing_score = 0
 
     def _load_scores(self) -> list[dict[str, Any]]:
         filename = self.config.highscore_filename
@@ -32,16 +32,23 @@ class EndScreenBase:
                 pass
         return []
 
-    def _name_exists(self, name: str) -> bool:
-        scores = self._load_scores()
+    def _find_entry(self, name: str) -> dict[str, Any] | None:
         name_clean = name.strip()
 
-        for entry in scores:
-            registered_name = entry.get("name", "")
-            registered_name_clean = registered_name.strip()
-            if registered_name_clean == name_clean:
-                return True
-        return False
+        for entry in self._load_scores():
+            if not isinstance(entry, dict):
+                continue
+            registered_name = str(entry.get("name", "")).strip()
+            if registered_name == name_clean:
+                return entry
+        return None
+
+    @staticmethod
+    def _get_score(entry: dict[str, Any]) -> int:
+        try:
+            return int(entry.get("score", 0))
+        except (ValueError, TypeError):
+            return 0
 
     def _save_highscore(self) -> None:
         filename = self.config.highscore_filename
@@ -49,11 +56,17 @@ class EndScreenBase:
         if not name_to_save:
             name_to_save = "PLAYER"
 
-        scores_list = self._load_scores()
+        scores_list = [
+            entry for entry in self._load_scores()
+            if isinstance(entry, dict)
+            and str(entry.get("name", "")).strip() != name_to_save
+        ]
         scores_list.append({"name": name_to_save, "score": self.final_score})
+        scores_list.sort(key=self._get_score, reverse=True)
+        top_scores = scores_list[:10]
         try:
             with open(filename, "w", encoding="utf-8") as f:
-                json.dump(scores_list, f, indent=4, ensure_ascii=False)
+                json.dump(top_scores, f, indent=4, ensure_ascii=False)
         except Exception as e:
             print(f"Error saving highscores: {e}")
 
@@ -67,18 +80,38 @@ class EndScreenBase:
                     name_to_check = self.player_name.strip()
                     if not name_to_check:
                         name_to_check = "PLAYER"
-                    if self._name_exists(name_to_check):
-                        self.show_error = True
+                    entry = self._find_entry(name_to_check)
+                    if entry is not None and not self.confirm_overwrite:
+                        self.existing_score = self._get_score(entry)
+                        self.confirm_overwrite = True
                     else:
                         self._save_highscore()
                         self.running = False
                 elif event.key == pygame.K_BACKSPACE:
                     self.player_name = self.player_name[:-1]
-                    self.show_error = False
+                    self.confirm_overwrite = False
                 elif len(self.player_name) < 10:
                     if event.unicode.isalnum() or event.key == pygame.K_SPACE:
                         self.player_name += event.unicode
-                        self.show_error = False
+                        self.confirm_overwrite = False
+
+    def _draw_overwrite_warning(self) -> None:
+        if not self.confirm_overwrite:
+            return
+        width = self.screen.get_width()
+        name = self.player_name.strip()
+        if not name:
+            name = "PLAYER"
+        lines = [
+            f"That name already exists as: {name} "
+            f"{self.existing_score} pts.",
+            "Press ENTER to overwrite it, or change the name."
+        ]
+        for i, line in enumerate(lines):
+            surface = self.font_text.render(line, True, (255, 50, 50))
+            self.screen.blit(surface,
+                             ((width - surface.get_width()) // 2,
+                              630 + i * 35))
 
 
 class GameOverScreen(EndScreenBase):
@@ -104,11 +137,7 @@ class GameOverScreen(EndScreenBase):
         self.screen.blit(name_surface, ((width - name_surface.get_width()
                                          ) // 2, 560))
 
-        if self.show_error:
-            error_surface = self.font_text.render(self.error_message, True,
-                                                  (255, 50, 50))
-            self.screen.blit(error_surface, ((width - error_surface.get_width()
-                                              ) // 2, 630))
+        self._draw_overwrite_warning()
 
         info = self.font_text.render(
             "[ Press ENTER to Save & Return to "
@@ -150,11 +179,7 @@ class VictoryScreen(EndScreenBase):
         self.screen.blit(name_surface, ((width - name_surface.get_width()
                                          ) // 2, 560))
 
-        if self.show_error:
-            error_surface = self.font_text.render(self.error_message, True,
-                                                  (255, 50, 50))
-            self.screen.blit(error_surface, ((width - error_surface.get_width()
-                                              ) // 2, 630))
+        self._draw_overwrite_warning()
 
         info = self.font_text.render(
             "[ Press ENTER to Save & Return to "
