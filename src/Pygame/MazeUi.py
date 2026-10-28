@@ -1,4 +1,5 @@
 import pygame
+import sys
 from mazegenerator import MazeGenerator
 from .EntitiesAdapter import EntitiesAdapter
 from .. import (EntityFactory, Ghost, Player, MovementEntity,
@@ -111,8 +112,14 @@ class MazeUi:
 
     def initializeMaze(self) -> None:
         seed = self.config.seed if self.current_level == 0 else 0
-        self.maze: MazeGenerator = MazeGenerator((self.width, self.height),
-                                                 perfect=False, seed=seed)
+        try:
+            self.maze: MazeGenerator = MazeGenerator((self.width, self.height),
+                                                     perfect=False, seed=seed)
+        except Exception as e:
+            print(f"Error: The maze generator could not create the map of "
+                  f"{self.width}x{self.height} ({e}).", file=sys.stderr)
+            pygame.quit()
+            sys.exit(1)
 
     def createAllSquaresAndSavingThem(self, x_limit: int) -> None:
         x = 5

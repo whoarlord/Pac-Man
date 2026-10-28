@@ -98,8 +98,14 @@ class MainMenu:
             self.screen.blit(no_score_surface, (x_no, 400))
         else:
             for i, entry in enumerate(scores_list[:10]):
-                name = entry.get("name", "UNKNOWN")[:10]
-                score = entry.get("score", 0)
+                if not isinstance(entry, dict):
+                    continue
+                name_raw = entry.get("name", "UNKNOWN")
+                if name_raw is not None:
+                    name = str(name_raw)[:10]
+                else:
+                    name = "UNKNOWN"
+                score = self._get_scores(entry)
 
                 line_text = f"{i + 1}. {name:<12} {score:>6} pts"
                 score_surface = self.font_text.render(line_text, True,

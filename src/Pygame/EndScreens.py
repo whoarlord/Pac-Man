@@ -46,8 +46,9 @@ class EndScreenBase:
     @staticmethod
     def _get_score(entry: dict[str, Any]) -> int:
         try:
-            return int(entry.get("score", 0))
-        except (ValueError, TypeError):
+            val = entry.get("score", 0)
+            return int(float(val))
+        except (ValueError, TypeError, OverflowError):
             return 0
 
     def _save_highscore(self) -> None:

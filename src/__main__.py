@@ -19,40 +19,49 @@ if __name__ == '__main__':
               file=sys.stderr)
         sys.exit(1)
 
-    parser = ConfigParser(config_path)
-    entityFactory = EntityFactory()
+    try:
+        parser = ConfigParser(config_path)
+        entityFactory = EntityFactory()
 
-    mazeUi = MazeUi(parser.config)
-    menu = MainMenu(mazeUi.screen, parser.config)
+        try:
+            mazeUi = MazeUi(parser.config)
+        except pygame.error as e:
+            print(f"Pygame error: Could not initialize the graphics display "
+                  f"({e}).", file=sys.stderr)
+            sys.exit(1)
 
-    while True:
-        menu.state = "MAIN"
-        menu.run()
+        menu = MainMenu(mazeUi.screen, parser.config)
 
-        mazeUi.reset()
+        while True:
+            menu.state = "MAIN"
+            menu.run()
 
-        entityAdapter = EntitiesAdapter((int(mazeUi.cell_size[0]),
-                                         int(mazeUi.cell_size[1])))
-        mazeUi.entity_factory = entityFactory
-        mazeUi.entity_adapter = entityAdapter
+            mazeUi.reset()
 
-        mazeUi.load_level(0)
-        mazeUi.setup_entities()
+            entityAdapter = EntitiesAdapter((int(mazeUi.cell_size[0]),
+                                            int(mazeUi.cell_size[1])))
+            mazeUi.entity_factory = entityFactory
+            mazeUi.entity_adapter = entityAdapter
 
-        mazeUi.event_loop()
+            mazeUi.load_level(0)
+            mazeUi.setup_entities()
 
-        if mazeUi.player.lives <= 0:
-            end_screen = GameOverScreen(mazeUi.screen, parser.config,
-                                        mazeUi.player.score)
-            mazeUi.back_to_menu = end_screen.run()
-        elif not mazeUi.pacgums and (mazeUi.current_level + 1 >= len
-                                     (parser.config.levels)):
-            victory_screen = VictoryScreen(mazeUi.screen, parser.config,
-                                           mazeUi.player.score)
-            mazeUi.back_to_menu = victory_screen.run()
+            mazeUi.event_loop()
 
-        if not mazeUi.back_to_menu:
-            break
+            if mazeUi.player.lives <= 0:
+                end_screen = GameOverScreen(mazeUi.screen, parser.config,
+                                            mazeUi.player.score)
+                mazeUi.back_to_menu = end_screen.run()
+            elif not mazeUi.pacgums and (mazeUi.current_level + 1 >= len
+                                         (parser.config.levels)):
+                victory_screen = VictoryScreen(mazeUi.screen, parser.config,
+                                               mazeUi.player.score)
+                mazeUi.back_to_menu = victory_screen.run()
 
-    pygame.quit()
-    sys.exit(1)
+            if not mazeUi.back_to_menu:
+                break
+    except KeyboardInterrupt:
+        print("\nJuego cerrado limpiamente por el usuario (Ctrl+C).")
+    finally:
+        pygame.quit()
+        sys.exit(0)
