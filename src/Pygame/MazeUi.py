@@ -36,7 +36,9 @@ class MazeUi:
         self.window_width = 1920
         self.window_height = 1080
         self.hud_height = 60
-        self.maze_height = self.window_height - self.hud_height
+        self.margin_top_height = 60
+        self.maze_height = (self.window_height - self.hud_height -
+                            self.margin_top_height)
         self.margin = 5
         self.thick = 3
         self.lines_color = (255, 255, 255)
@@ -179,13 +181,20 @@ class MazeUi:
         for i, text in enumerate(texts):
             image = self.font.render(text, True, (255, 255, 255))
             x = 20 + i * (self.window_width // 4)
-            y = self.maze_height + (self.hud_height - image.get_height()) // 2
+            y = (self.margin_top_height + self.maze_height +
+                 (self.hud_height - image.get_height()) // 2)
             self.screen.blit(image, (x, y))
 
     def draw_icons(self) -> None:
+        current_x = 20
+        margin_y = 15
         if (self.player.is_invincible()):
             img = self.entity_adapter.make_invincible_icon()
-            self.screen.blit(img, self.calculate_rect_for_cell((0, 0)))
+            self.screen.blit(img, (current_x, margin_y))
+            current_x += img.get_width() + 20
+        if (self.player.is_speed_boost()):
+            img_speed = self.entity_adapter.make_speed_up_icon()
+            self.screen.blit(img_speed, (current_x, margin_y))
 
     def draw_life_extra_animation(self, dt: int) -> None:
         if not self.life_anim_active or not self.life_anim_image:
@@ -255,7 +264,8 @@ class MazeUi:
         x_increment = (self.window_width - self.margin) / self.width
         y_increment = (self.maze_height - self.margin) / self.height
         return (self.margin + int(x_increment * (coordinates[0])),
-                self.margin + int(y_increment * (coordinates[1])))
+                self.margin + self.margin_top_height + int(y_increment *
+                                                           (coordinates[1])))
 
     def make_ghost_by_color(self, ghost: Ghost) -> None:
         scared: bool = self.player.is_powered_up
@@ -273,9 +283,9 @@ class MazeUi:
             ghost.set_image(img)
 
     def calculate_next_movement(self, entity: MovementEntity) -> None:
-        division: int = 10
+        division: float = 10.0
         if (isinstance(entity, Player)):
-            division = 5
+            division = 2.5 if entity.is_speed_boost() else 5.0
             img = self.entity_adapter.makePlayerImage(entity.current_direction)
             entity.set_image(img)
         elif isinstance(entity, Ghost):
@@ -514,6 +524,8 @@ class MazeUi:
                     self.life_anim_time = 0
                     self.life_anim_image = (
                         self.entity_adapter.make_extra_live_icon())
+                elif event.key == pygame.K_b:
+                    self.player.change_speed_boost()
 
     def handle_pause_key(self, key: int) -> None:
         if key in (pygame.K_UP, pygame.K_w):

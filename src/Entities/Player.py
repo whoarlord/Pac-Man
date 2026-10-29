@@ -23,6 +23,7 @@ class Player(MovementEntity):
         self.lives = lives
         self.pacman_state: int = 0
         self.invincible: bool = False
+        self.speed_boost = False
 
     def add_pacgum_points(self) -> None:
         """Add POINTS_PER_PACGUM to the score.
@@ -82,3 +83,12 @@ class Player(MovementEntity):
 
     def add_extra_life(self) -> None:
         self.lives = min(10, self.lives + 1)
+
+    def change_speed_boost(self) -> None:
+        if (self.speed_boost):
+            self.speed_boost = False
+        else:
+            self.speed_boost = True
+
+    def is_speed_boost(self) -> bool:
+        return self.speed_boost
