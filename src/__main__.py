@@ -5,6 +5,8 @@ from src.Entities.EntityFactory import EntityFactory
 from src.Pygame.MazeUi import MazeUi
 from src.Pygame.EntitiesAdapter import EntitiesAdapter
 from src.Pygame.Menu import MainMenu
+from src.Pygame.MazeGrid import MazeGrid
+from src.Pygame.MazeRenderer import MazeRenderer
 
 
 if __name__ == '__main__':
@@ -22,23 +24,19 @@ if __name__ == '__main__':
     entityFactory = EntityFactory()
 
     mazeUi = MazeUi(parser.config)
-    menu = MainMenu(mazeUi.screen, parser.config)
+    width, height = mazeUi.get_actual_level_size()
+    maze_grid = MazeGrid(width, height)
+    entity_adapter = EntitiesAdapter(maze_grid.get_cell_size())
+    maze_renderer = MazeRenderer(maze_grid, mazeUi, entity_adapter)
+    menu = MainMenu(maze_renderer.screen, parser.config)
 
     while True:
         menu.state = "MAIN"
         menu.run()
 
-        mazeUi.reset()
-
-        entityAdapter = EntitiesAdapter((int(mazeUi.cell_size[0]),
-                                         int(mazeUi.cell_size[1])))
-        mazeUi.entity_factory = entityFactory
-        mazeUi.entity_adapter = entityAdapter
-
-        mazeUi.load_level(0)
-        mazeUi.setup_entities()
-
-        mazeUi.event_loop()
+        maze_renderer.reset()
+        maze_renderer.setup_entities()
+        maze_renderer.event_loop()
 
         if not mazeUi.back_to_menu:
             break
