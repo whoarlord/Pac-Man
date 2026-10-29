@@ -517,9 +517,6 @@ class MazeUi:
                     self.player.update_direction()
                 if self.player.current_direction != MovingDirection.NOT_MOVING:
                     self.calculate_next_movement(self.player)
-                    if self.player.current_direction == (MovingDirection.
-                                                         NOT_MOVING):
-                        self.player.update_direction()
                 player_pos = (self.player.x, self.player.y)
                 for ghost in self.ghosts:
                     if ghost.current_direction != MovingDirection.NOT_MOVING:

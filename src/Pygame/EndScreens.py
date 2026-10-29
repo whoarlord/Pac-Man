@@ -34,12 +34,12 @@ class EndScreenBase:
             data = None
         if isinstance(data, list):
             return data
-        self._backup_corrupt_file(filename)
+        self._malformed_highscore(filename)
         return []
 
     @staticmethod
-    def _backup_corrupt_file(filename: str) -> None:
-        backup = filename + ".bak"
+    def _malformed_highscore(filename: str) -> None:
+        backup = "malformed_highscore.txt"
         try:
             os.replace(filename, backup)
             print(f"Warning: '{filename}' is not valid. "
