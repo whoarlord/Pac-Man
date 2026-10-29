@@ -17,6 +17,7 @@ class MainMenu:
                         "Instructions", "Exit"]
         self.selected_index = 0
         self.state = "MAIN"
+        self.scores: list[dict[str, Any]] = []
 
     def _draw_main_menu(self) -> None:
         screen_width = self.screen.get_width()
@@ -67,9 +68,26 @@ class MainMenu:
         self.screen.blit(back_surface, (x_back, 850))
 
     def _get_scores(self, element: dict[str, Any]) -> int:
-        if isinstance(element, dict):
-            return int(element.get("score", 0))
-        return 0
+        if not isinstance(element, dict):
+            return 0
+        try:
+            return int(float(element.get("score", 0)))
+        except (ValueError, TypeError, OverflowError):
+            return 0
+
+    def _load_scores(self) -> list[dict[str, Any]]:
+        filename = self.config.highscore_filename
+        if not os.path.exists(filename):
+            return []
+        try:
+            with open(filename, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception:
+            return []
+        if not isinstance(data, list):
+            return []
+        valid = [entry for entry in data if isinstance(entry, dict)]
+        return sorted(valid, key=self._get_scores, reverse=True)
 
     def _draw_highscores(self) -> None:
         screen_width = self.screen.get_width()
@@ -78,18 +96,7 @@ class MainMenu:
         x_title = (screen_width - title_surface.get_width()) // 2
         self.screen.blit(title_surface, (x_title, 100))
 
-        scores_list = []
-        filename = self.config.highscore_filename
-
-        if os.path.exists(filename):
-            try:
-                with open(filename, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    if isinstance(data, list):
-                        scores_list = sorted(data, key=self._get_scores,
-                                             reverse=True)
-            except Exception:
-                pass
+        scores_list = self.scores
 
         if not scores_list:
             no_score_surface = self.font_text.render(
@@ -123,6 +130,7 @@ class MainMenu:
         if selected == "Start Game":
             return "START_GAME"
         elif selected == "View Highscores":
+            self.scores = self._load_scores()
             self.state = "HIGHSCORES"
         elif selected == "Instructions":
             self.state = "INSTRUCTIONS"

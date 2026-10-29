@@ -98,20 +98,23 @@ class Ghost(MovementEntity):
 
         distances = self._get_distances(player_pos)
         neighbors = self._get_neighbors((self.x, self.y))
-        if not neighbors:
-            return (self.x, self.y)
-        best = neighbors[0]
-        best_dist = distances.get(best, 0 if chase else float('inf'))
+        best: tuple[int, int] | None = None
+        best_dist = 0
         for cell in neighbors:
             if cell not in distances:
                 continue
             cell_dist = distances[cell]
-            if chase and cell_dist < best_dist:
+            if best is None:
+                better = True
+            elif chase:
+                better = cell_dist < best_dist
+            else:
+                better = cell_dist > best_dist
+            if better:
                 best = cell
                 best_dist = cell_dist
-            elif not chase and cell_dist > best_dist:
-                best = cell
-                best_dist = cell_dist
+        if best is None:
+            return (self.x, self.y)
         return best
 
     def _move_to(self, cell: tuple[int, int]) -> None:

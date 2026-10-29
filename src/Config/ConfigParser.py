@@ -29,7 +29,7 @@ class LevelConfig(BaseModel):
                       f"Clamping to 100.")
                 return 100
             return val
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, OverflowError):
             print(f"Invalid type for {field_name}: {v!r}. "
                   f"Using default value (20).")
             return 20

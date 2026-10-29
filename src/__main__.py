@@ -19,6 +19,7 @@ if __name__ == '__main__':
               file=sys.stderr)
         sys.exit(1)
 
+    exit_code = 0
     try:
         parser = ConfigParser(config_path)
         entityFactory = EntityFactory()
@@ -62,6 +63,12 @@ if __name__ == '__main__':
                 break
     except KeyboardInterrupt:
         print("\nJuego cerrado limpiamente por el usuario (Ctrl+C).")
+    except (FileNotFoundError, pygame.error) as e:
+        print(f"Error: {e}", file=sys.stderr)
+        exit_code = 1
+    except Exception as e:
+        print(f"Unexpected error: {e}", file=sys.stderr)
+        exit_code = 1
     finally:
         pygame.quit()
-        sys.exit(0)
+    sys.exit(exit_code)

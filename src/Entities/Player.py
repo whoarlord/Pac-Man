@@ -71,11 +71,11 @@ class Player(MovementEntity):
         elif not self.try_move_player(self.current_direction):
             self.current_direction = MovingDirection.NOT_MOVING
 
-    def change_invincibility(self):
+    def change_invincibility(self) -> None:
         if (self.invincible):
             self.invincible = False
         else:
             self.invincible = True
 
-    def is_invincible(self):
+    def is_invincible(self) -> bool:
         return self.invincible

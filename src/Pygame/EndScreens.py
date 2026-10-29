@@ -19,18 +19,33 @@ class EndScreenBase:
         self.running = True
         self.confirm_overwrite = False
         self.existing_score = 0
+        self.save_failed = False
 
     def _load_scores(self) -> list[dict[str, Any]]:
         filename = self.config.highscore_filename
-        if os.path.exists(filename):
-            try:
-                with open(filename, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    if isinstance(data, list):
-                        return data
-            except Exception:
-                pass
+        if not os.path.exists(filename):
+            return []
+        try:
+            with open(filename, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except OSError:
+            return []
+        except ValueError:
+            data = None
+        if isinstance(data, list):
+            return data
+        self._backup_corrupt_file(filename)
         return []
+
+    @staticmethod
+    def _backup_corrupt_file(filename: str) -> None:
+        backup = filename + ".bak"
+        try:
+            os.replace(filename, backup)
+            print(f"Warning: '{filename}' is not valid. "
+                  f"A copy was saved as '{backup}'.")
+        except OSError as e:
+            print(f"Warning: could not back up '{filename}': {e}")
 
     def _find_entry(self, name: str) -> dict[str, Any] | None:
         name_clean = name.strip()
@@ -51,7 +66,7 @@ class EndScreenBase:
         except (ValueError, TypeError, OverflowError):
             return 0
 
-    def _save_highscore(self) -> None:
+    def _save_highscore(self) -> bool:
         filename = self.config.highscore_filename
         name_to_save = self.player_name.strip()
         if not name_to_save:
@@ -65,11 +80,15 @@ class EndScreenBase:
         scores_list.append({"name": name_to_save, "score": self.final_score})
         scores_list.sort(key=self._get_score, reverse=True)
         top_scores = scores_list[:10]
+        tmp_filename = filename + ".tmp"
         try:
-            with open(filename, "w", encoding="utf-8") as f:
+            with open(tmp_filename, "w", encoding="utf-8") as f:
                 json.dump(top_scores, f, indent=4, ensure_ascii=False)
+            os.replace(tmp_filename, filename)
         except Exception as e:
             print(f"Error saving highscores: {e}")
+            return False
+        return True
 
     def handle_events(self) -> None:
         for event in pygame.event.get():
@@ -85,9 +104,10 @@ class EndScreenBase:
                     if entry is not None and not self.confirm_overwrite:
                         self.existing_score = self._get_score(entry)
                         self.confirm_overwrite = True
-                    else:
-                        self._save_highscore()
+                    elif self.save_failed or self._save_highscore():
                         self.running = False
+                    else:
+                        self.save_failed = True
                 elif event.key == pygame.K_BACKSPACE:
                     self.player_name = self.player_name[:-1]
                     self.confirm_overwrite = False
@@ -97,17 +117,21 @@ class EndScreenBase:
                         self.confirm_overwrite = False
 
     def _draw_overwrite_warning(self) -> None:
-        if not self.confirm_overwrite:
-            return
         width = self.screen.get_width()
-        name = self.player_name.strip()
-        if not name:
-            name = "PLAYER"
-        lines = [
-            f"That name already exists as: {name} "
-            f"{self.existing_score} pts.",
-            "Press ENTER to overwrite it, or change the name."
-        ]
+        if self.save_failed:
+            lines = ["The score could not be saved (see the terminal).",
+                     "Press ENTER to continue."]
+        elif self.confirm_overwrite:
+            name = self.player_name.strip()
+            if not name:
+                name = "PLAYER"
+            lines = [
+                f"That name already exists as: {name} "
+                f"{self.existing_score} pts.",
+                "Press ENTER to overwrite it, or change the name."
+            ]
+        else:
+            return
         for i, line in enumerate(lines):
             surface = self.font_text.render(line, True, (255, 50, 50))
             self.screen.blit(surface,

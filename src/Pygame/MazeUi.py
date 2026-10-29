@@ -1,6 +1,11 @@
 import pygame
 import sys
-from mazegenerator import MazeGenerator
+try:
+    from mazegenerator import MazeGenerator
+except ImportError:
+    print("Error: the 'mazegenerator' package is not installed. "
+          "Install it first (make install).", file=sys.stderr)
+    sys.exit(1)
 from .EntitiesAdapter import EntitiesAdapter
 from .. import (EntityFactory, Ghost, Player, MovementEntity,
                 MovingDirection)
@@ -121,23 +126,6 @@ class MazeUi:
             pygame.quit()
             sys.exit(1)
 
-    def createAllSquaresAndSavingThem(self, x_limit: int) -> None:
-        x = 5
-        y = 5
-        increment = 50
-        margin = 10
-        for i in range(16):
-            self.createMazeBlock(i, x, y, x + increment, y + increment)
-
-            zone = self.screen.subsurface(
-                pygame.Rect(x, y, increment + 1, increment + 1)
-            ).copy()
-            self.saveImage(zone, f"../img/square_{i}.png")
-            x += increment + margin
-            if (x + increment + margin > x_limit):
-                x = 5
-                y += increment + margin
-
     def place_player(self, player: pygame.Surface) -> None:
         x = int((self.width - 1) / 2)
         y = int((self.height - 1) / 2)
@@ -215,7 +203,7 @@ class MazeUi:
         return (self.margin + int(x_increment * (coordinates[0])),
                 self.margin + int(y_increment * (coordinates[1])))
 
-    def make_ghost_by_color(self, ghost: Ghost):
+    def make_ghost_by_color(self, ghost: Ghost) -> None:
         scared: bool = self.player.is_powered_up
         if ghost.color == Ghost.GhostColor.RED:
             img = self.entity_adapter.makeRedGhostImage(scared)
@@ -236,7 +224,7 @@ class MazeUi:
             division = 5
             img = self.entity_adapter.makePlayerImage(entity.current_direction)
             entity.set_image(img)
-        else:
+        elif isinstance(entity, Ghost):
             self.make_ghost_by_color(entity)
         x_increment = int(((self.window_width - self.margin)
                            / self.width) / division)
@@ -422,7 +410,7 @@ class MazeUi:
             return
         width_c, height_c = self.cell_size
 
-        tolerance = 6
+        tolerance = min(6, int(min(width_c, height_c) / 4))
 
         p_left = self.player.x_pixel + tolerance
         p_right = self.player.x_pixel + width_c - tolerance
