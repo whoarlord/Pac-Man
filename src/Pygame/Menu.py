@@ -104,6 +104,8 @@ class MainMenu:
             x_no = (screen_width - no_score_surface.get_width()) // 2
             self.screen.blit(no_score_surface, (x_no, 400))
         else:
+            table_width = 450
+            start_x = (screen_width - table_width) // 2
             for i, entry in enumerate(scores_list[:10]):
                 if not isinstance(entry, dict):
                     continue
@@ -114,11 +116,20 @@ class MainMenu:
                     name = "UNKNOWN"
                 score = self._get_scores(entry)
 
-                line_text = f"{i + 1}. {name:<12} {score:>6} pts"
-                score_surface = self.font_text.render(line_text, True,
-                                                      (255, 184, 174))
-                x_pos = (screen_width - score_surface.get_width()) // 2
-                self.screen.blit(score_surface, (x_pos, 220 + i * 45))
+                y_pos = 220 + i * 45
+
+                rank_surf = self.font_text.render(f"{i + 1}.", True,
+                                                  (255, 184, 174))
+                self.screen.blit(rank_surf, (start_x, y_pos))
+
+                name_surf = self.font_text.render(name, True, (255, 184, 174))
+                self.screen.blit(name_surf, (start_x + 60, y_pos))
+
+                score_text = f"{score} pts"
+                score_surf = self.font_text.render(score_text, True,
+                                                   (255, 184, 174))
+                score_x = start_x + table_width - score_surf.get_width()
+                self.screen.blit(score_surf, (score_x, y_pos))
 
         back_surface = self.font_text.render(
             "[ Press ESC to return to Menu ]", True, (150, 150, 150))
