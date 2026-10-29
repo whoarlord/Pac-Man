@@ -24,7 +24,7 @@ class EntitiesAdapter:
             "pacman_left_5", "pacman_right_1", "pacman_right_2",
             "pacman_right_3", "pacman_right_4", "pacman_right_5",
             "pacman_up_1", "pacman_up_2", "pacman_up_3", "pacman_up_4",
-            "pacman_up_5"
+            "pacman_up_5", "extra_live"
         ]
         return [f"{self.img_route}{name}.png" for name in names]
 
@@ -96,3 +96,6 @@ class EntitiesAdapter:
 
     def make_invincible_icon(self) -> pygame.Surface:
         return self._load_entity(f"{self.img_route}invincible_icon_low.png")
+
+    def make_extra_live_icon(self) -> pygame.Surface:
+        return self._load_entity(f"{self.img_route}extra_live.png")

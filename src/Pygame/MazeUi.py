@@ -63,6 +63,10 @@ class MazeUi:
         self.pause_veil.set_alpha(150)
         self.pause_veil.fill((0, 0, 0))
         self.back_to_menu = False
+        self.life_anim_active = False
+        self.life_anim_time = 0
+        self.life_anim_duration = 1000
+        self.life_anim_image = None
 
     def load_level(self, level_index: int) -> None:
         self.current_level = level_index
@@ -183,6 +187,54 @@ class MazeUi:
             img = self.entity_adapter.make_invincible_icon()
             self.screen.blit(img, self.calculate_rect_for_cell((0, 0)))
 
+    def draw_life_extra_animation(self, dt: int) -> None:
+        if not self.life_anim_active or not self.life_anim_image:
+            return
+        self.life_anim_time += dt
+        if self.life_anim_time >= self.life_anim_duration:
+            self.life_anim_active = False
+            return
+        progress = self.life_anim_time / self.life_anim_duration
+        center_x = self.window_width // 2
+        center_y = self.window_height // 2
+
+        if progress <= 0.6:
+            phase_prog = progress / 0.6
+            scale_factor = 0.1 + (5.9 * phase_prog)
+            orig_w, orig_h = self.life_anim_image.get_size()
+            new_w = int(orig_w * scale_factor)
+            new_h = int(orig_h * scale_factor)
+            scaled_img = pygame.transform.scale(self.life_anim_image,
+                                                (new_w, new_h))
+            rect = scaled_img.get_rect(center=(center_x, center_y))
+            self.screen.blit(scaled_img, rect.topleft)
+        else:
+            phase_prog = (progress - 0.6) / 0.4
+            orig_w, orig_h = self.life_anim_image.get_size()
+            base_w = int(orig_w * 6.0)
+            base_h = int(orig_h * 6.0)
+            offset = int(350 * phase_prog)
+            alpha = max(0, int(255 * (1.0 - phase_prog)))
+            base_img = pygame.transform.scale(self.life_anim_image,
+                                              (base_w, base_h))
+            w_half, h_half = base_w // 2, base_h // 2
+            quads = [
+                (base_img.subsurface(pygame.Rect(0, 0, w_half, h_half)),
+                 -offset, -offset),         # Top-Left
+                (base_img.subsurface(pygame.Rect(w_half, 0, w_half, h_half)),
+                 offset, -offset),      # Top-Right
+                (base_img.subsurface(pygame.Rect(0, h_half, w_half, h_half)),
+                 -offset, offset),      # Bottom-Left
+                (base_img.subsurface(pygame.Rect(w_half, h_half, w_half,
+                                                 h_half)), offset, offset)
+            ]
+            for quad_img, off_x, off_y in quads:
+                quad_surface = quad_img.copy()
+                quad_surface.set_alpha(alpha)
+                q_rect = quad_surface.get_rect()
+                q_rect.center = (center_x + off_x, center_y + off_y)
+                self.screen.blit(quad_surface, q_rect.topleft)
+
     def print_map(self) -> None:
         self.screen.fill("black")
         self.makeMaze(self.width, self.height)
@@ -195,6 +247,8 @@ class MazeUi:
         self.draw_hud()
         self.check_collisions()
         self.draw_icons()
+        dt = pygame.time.Clock().tick(60)
+        self.draw_life_extra_animation(dt)
 
     def calculate_pixels_tuple(self, coordinates: Tuple[int, int]
                                ) -> Tuple[int, int]:
@@ -436,7 +490,7 @@ class MazeUi:
                 else:
                     self.lose_life_and_reset()
                     lives = self.player.lives
-                    print(f"¡Te han tocado! Vidas restantes: {lives}")
+                    print(f"¡You have been touched! Remaining lives: {lives}")
                     break
 
     def bind_events(self) -> None:
@@ -454,6 +508,12 @@ class MazeUi:
                         event.key]
                 elif event.key == pygame.K_i:
                     self.player.change_invincibility()
+                elif event.key == pygame.K_v:
+                    self.player.add_extra_life()
+                    self.life_anim_active = True
+                    self.life_anim_time = 0
+                    self.life_anim_image = (
+                        self.entity_adapter.make_extra_live_icon())
 
     def handle_pause_key(self, key: int) -> None:
         if key in (pygame.K_UP, pygame.K_w):

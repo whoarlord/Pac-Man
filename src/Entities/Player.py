@@ -79,3 +79,6 @@ class Player(MovementEntity):
 
     def is_invincible(self) -> bool:
         return self.invincible
+
+    def add_extra_life(self) -> None:
+        self.lives = min(10, self.lives + 1)
