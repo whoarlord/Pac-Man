@@ -244,6 +244,26 @@ class MazeUi:
                 q_rect.center = (center_x + off_x, center_y + off_y)
                 self.screen.blit(quad_surface, q_rect.topleft)
 
+    def trigger_level_skip_effect(self) -> None:
+        fire_efect = pygame.Surface((self.window_width, self.window_height))
+        fire_efect.set_alpha(120)
+        fire_efect.fill((255, 140, 0))
+        self.screen.blit(fire_efect, (0, 0))
+
+        text_font = pygame.font.Font(None, 120)
+        super_text = text_font.render("FIRE SALE: LEVEL SKIP", True,
+                                      (255, 238, 0))
+        text_rect = super_text.get_rect(center=(self.window_width // 2,
+                                                self.window_height // 2))
+        self.screen.blit(super_text, text_rect.topleft)
+
+        pygame.display.flip()
+
+        pygame.time.wait(800)
+
+        self.pacgums.clear()
+        self.super_pacgums.clear()
+
     def print_map(self) -> None:
         self.screen.fill("black")
         self.makeMaze(self.width, self.height)
@@ -526,6 +546,8 @@ class MazeUi:
                         self.entity_adapter.make_extra_live_icon())
                 elif event.key == pygame.K_b:
                     self.player.change_speed_boost()
+                elif event.key == pygame.K_l:
+                    self.trigger_level_skip_effect()
 
     def handle_pause_key(self, key: int) -> None:
         if key in (pygame.K_UP, pygame.K_w):
