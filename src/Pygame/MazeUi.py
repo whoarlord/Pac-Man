@@ -195,6 +195,10 @@ class MazeUi:
         if (self.player.is_speed_boost()):
             img_speed = self.entity_adapter.make_speed_up_icon()
             self.screen.blit(img_speed, (current_x, margin_y))
+            current_x += img_speed.get_width() + 20
+        if (self.player.is_ghost_freeze()):
+            img_ghost = self.entity_adapter.make_ghost_freeze_icon()
+            self.screen.blit(img_ghost, (current_x, margin_y))
 
     def draw_life_extra_animation(self, dt: int) -> None:
         if not self.life_anim_active or not self.life_anim_image:
@@ -548,6 +552,8 @@ class MazeUi:
                     self.player.change_speed_boost()
                 elif event.key == pygame.K_l:
                     self.trigger_level_skip_effect()
+                elif event.key == pygame.K_f:
+                    self.player.change_ghost_freeze()
 
     def handle_pause_key(self, key: int) -> None:
         if key in (pygame.K_UP, pygame.K_w):
@@ -612,14 +618,16 @@ class MazeUi:
                 if self.player.current_direction != MovingDirection.NOT_MOVING:
                     self.calculate_next_movement(self.player)
                 player_pos = (self.player.x, self.player.y)
-                for ghost in self.ghosts:
-                    if ghost.current_direction != MovingDirection.NOT_MOVING:
-                        self.calculate_next_movement(ghost)
-                    else:
-                        if self.player.is_powered_up:
-                            ghost.run_from_player(player_pos)
+                if not self.player.is_ghost_freeze():
+                    for ghost in self.ghosts:
+                        if (ghost.current_direction
+                                != MovingDirection.NOT_MOVING):
+                            self.calculate_next_movement(ghost)
                         else:
-                            ghost.catch_player(player_pos)
+                            if self.player.is_powered_up:
+                                ghost.run_from_player(player_pos)
+                            else:
+                                ghost.catch_player(player_pos)
                 time_counter -= movement_interval
             pygame.display.flip()
 

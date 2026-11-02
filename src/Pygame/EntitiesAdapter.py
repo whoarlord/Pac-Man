@@ -5,6 +5,8 @@ from src.Entities.MovementEntity import MovingDirection
 
 
 class EntitiesAdapter:
+    ICON_SIZE = (76, 38)
+
     def __init__(self, entity_dimensions: Tuple[int, int]) -> None:
         img_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                "..", "img")
@@ -24,7 +26,7 @@ class EntitiesAdapter:
             "pacman_left_5", "pacman_right_1", "pacman_right_2",
             "pacman_right_3", "pacman_right_4", "pacman_right_5",
             "pacman_up_1", "pacman_up_2", "pacman_up_3", "pacman_up_4",
-            "pacman_up_5", "extra_live", "speed_up"
+            "pacman_up_5", "extra_live", "speed_up", "ghost_freeze"
         ]
         return [f"{self.img_route}{name}.png" for name in names]
 
@@ -57,6 +59,18 @@ class EntitiesAdapter:
             raise pygame.error(f"Cannot load image '{route}': {e}") from e
         scaled = pygame.transform.scale(img, self.entity_dimensions)
         self.cache[route] = scaled
+        return scaled
+
+    def _load_icon(self, route: str) -> pygame.Surface:
+        key = f"icon:{route}"
+        if key in self.cache:
+            return self.cache[key]
+        try:
+            img = pygame.image.load(route).convert_alpha()
+        except pygame.error as e:
+            raise pygame.error(f"Cannot load image '{route}': {e}") from e
+        scaled = pygame.transform.scale(img, self.ICON_SIZE)
+        self.cache[key] = scaled
         return scaled
 
     def makePlayerImage(self, direction: MovingDirection) -> pygame.Surface:
@@ -95,10 +109,13 @@ class EntitiesAdapter:
         return self._load_entity(f"{self.img_route}pink_ghost.png")
 
     def make_invincible_icon(self) -> pygame.Surface:
-        return self._load_entity(f"{self.img_route}invincible_icon_low.png")
+        return self._load_icon(f"{self.img_route}invincible_icon_low.png")
 
     def make_extra_live_icon(self) -> pygame.Surface:
         return self._load_entity(f"{self.img_route}extra_live.png")
 
     def make_speed_up_icon(self) -> pygame.Surface:
-        return self._load_entity(f"{self.img_route}speed_up.png")
+        return self._load_icon(f"{self.img_route}speed_up.png")
+
+    def make_ghost_freeze_icon(self) -> pygame.Surface:
+        return self._load_icon(f"{self.img_route}ghost_freeze.png")

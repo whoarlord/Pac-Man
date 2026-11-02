@@ -24,6 +24,7 @@ class Player(MovementEntity):
         self.pacman_state: int = 0
         self.invincible: bool = False
         self.speed_boost = False
+        self.ghost_freeze = False
 
     def add_pacgum_points(self) -> None:
         """Add POINTS_PER_PACGUM to the score.
@@ -92,3 +93,12 @@ class Player(MovementEntity):
 
     def is_speed_boost(self) -> bool:
         return self.speed_boost
+
+    def change_ghost_freeze(self) -> None:
+        if (self.ghost_freeze):
+            self.ghost_freeze = False
+        else:
+            self.ghost_freeze = True
+
+    def is_ghost_freeze(self) -> bool:
+        return self.ghost_freeze
