@@ -32,6 +32,7 @@ class Ghost(MovementEntity):
         self.spawn_x = x
         self.spawn_y = y
         self.respawn_timer = 0
+        self.scared = False
 
     def set_image(self, image: Surface) -> None:
         self.image = image
@@ -166,3 +167,6 @@ class Ghost(MovementEntity):
 
     def is_eaten(self) -> bool:
         return self.respawn_timer > 0
+
+    def is_scared(self) -> bool:
+        return self.scared

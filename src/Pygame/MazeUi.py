@@ -295,7 +295,7 @@ class MazeUi:
                                                            (coordinates[1])))
 
     def make_ghost_by_color(self, ghost: Ghost) -> None:
-        scared: bool = self.player.is_powered_up
+        scared: bool = ghost.is_scared()
         if ghost.color == Ghost.GhostColor.RED:
             img = self.entity_adapter.makeRedGhostImage(scared)
             ghost.set_image(img)
@@ -480,6 +480,9 @@ class MazeUi:
                 self.super_pacgums.remove(pacgum)
                 self.player.add_super_pacgum_points()
                 self.player.power_up()
+                for ghost in self.ghosts:
+                    if not ghost.is_eaten():
+                        ghost.scared = True
                 self.power_up_timer = 0
 
     def lose_life_and_reset(self) -> None:
@@ -493,6 +496,7 @@ class MazeUi:
         for ghost in self.ghosts:
             ghost.respawn()
             ghost.respawn_timer = 0
+            ghost.scared = False
             px_g = self.calculate_pixels_tuple((ghost.x, ghost.y))
             ghost.set_pixels(px_g)
             ghost.set_current_direction(MovingDirection.NOT_MOVING)
@@ -521,7 +525,8 @@ class MazeUi:
                          p_down < g_up or p_up > g_down)
 
             if not separated:
-                if self.player.is_powered_up:
+                if ghost.is_scared():
+                    ghost.scared = False
                     ghost.respawn_timer = self.RESPAWN_DELAY
                     self.player.add_ghost_points()
                     ghost.respawn()
@@ -609,6 +614,8 @@ class MazeUi:
                 self.power_up_timer += dt
                 if self.power_up_timer >= self.POWER_UP_DURATION:
                     self.player.power_down()
+                    for ghost in self.ghosts:
+                        ghost.scared = False
                     self.power_up_timer = 0
             for ghost in self.ghosts:
                 if ghost.is_eaten():
@@ -636,7 +643,7 @@ class MazeUi:
                                 != MovingDirection.NOT_MOVING):
                             self.calculate_next_movement(ghost)
                         else:
-                            if self.player.is_powered_up:
+                            if ghost.is_scared():
                                 ghost.run_from_player(player_pos)
                             else:
                                 ghost.catch_player(player_pos)
