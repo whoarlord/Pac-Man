@@ -31,6 +31,7 @@ class Ghost(MovementEntity):
         self.color = color
         self.spawn_x = x
         self.spawn_y = y
+        self.respawn_timer = 0
 
     def set_image(self, image: Surface) -> None:
         self.image = image
@@ -162,3 +163,6 @@ class Ghost(MovementEntity):
 
         cell = self._choose_cell(player_pos, False)
         self._move_to(cell)
+
+    def is_eaten(self) -> bool:
+        return self.respawn_timer > 0

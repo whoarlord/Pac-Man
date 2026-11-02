@@ -55,6 +55,7 @@ class MazeUi:
         self.entity_adapter: EntitiesAdapter
         self.power_up_timer = 0
         self.POWER_UP_DURATION = 7000
+        self.RESPAWN_DELAY = 5000
         self.level_timer = 0
         self.paused = False
         self.pause_options = ["Resume", "Return to Main Menu"]
@@ -275,6 +276,8 @@ class MazeUi:
         self.place_element(self.player.image,
                            (self.player.get_pixels()))
         for ghost in self.ghosts:
+            if ghost.is_eaten():
+                continue
             self.place_element(ghost.image,
                                ghost.get_pixels())
         self.draw_hud()
@@ -489,6 +492,7 @@ class MazeUi:
         self.reset_player_position()
         for ghost in self.ghosts:
             ghost.respawn()
+            ghost.respawn_timer = 0
             px_g = self.calculate_pixels_tuple((ghost.x, ghost.y))
             ghost.set_pixels(px_g)
             ghost.set_current_direction(MovingDirection.NOT_MOVING)
@@ -506,6 +510,8 @@ class MazeUi:
         p_down = self.player.y_pixel + height_c - tolerance
 
         for ghost in self.ghosts:
+            if ghost.is_eaten():
+                continue
             g_left = ghost.x_pixel + tolerance
             g_right = ghost.x_pixel + width_c - tolerance
             g_up = ghost.y_pixel + tolerance
@@ -516,6 +522,7 @@ class MazeUi:
 
             if not separated:
                 if self.player.is_powered_up:
+                    ghost.respawn_timer = self.RESPAWN_DELAY
                     self.player.add_ghost_points()
                     ghost.respawn()
                     px_ghost = self.calculate_pixels_tuple((ghost.x, ghost.y))
@@ -603,6 +610,9 @@ class MazeUi:
                 if self.power_up_timer >= self.POWER_UP_DURATION:
                     self.player.power_down()
                     self.power_up_timer = 0
+            for ghost in self.ghosts:
+                if ghost.is_eaten():
+                    ghost.respawn_timer = max(0, ghost.respawn_timer - dt)
             self.level_timer += dt
             if self.level_timer >= self.config.level_max_time * 1000:
                 print("Tiempo agotado")
@@ -620,6 +630,8 @@ class MazeUi:
                 player_pos = (self.player.x, self.player.y)
                 if not self.player.is_ghost_freeze():
                     for ghost in self.ghosts:
+                        if ghost.is_eaten():
+                            continue
                         if (ghost.current_direction
                                 != MovingDirection.NOT_MOVING):
                             self.calculate_next_movement(ghost)
