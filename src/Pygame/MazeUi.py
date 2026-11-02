@@ -604,7 +604,7 @@ class MazeUi:
                 print(f"Vidas restantes: {self.player.lives}")
                 self.level_timer = 0
             self.eat_pacgums()
-            if not self.pacgums:
+            if not self.pacgums and not self.super_pacgums:
                 self.next_level()
             if time_counter >= movement_interval:
                 if self.player.current_direction == MovingDirection.NOT_MOVING:

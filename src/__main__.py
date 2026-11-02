@@ -53,8 +53,8 @@ if __name__ == '__main__':
                 end_screen = GameOverScreen(mazeUi.screen, parser.config,
                                             mazeUi.player.score)
                 mazeUi.back_to_menu = end_screen.run()
-            elif not mazeUi.pacgums and (mazeUi.current_level + 1 >= len
-                                         (parser.config.levels)):
+            elif not mazeUi.pacgums and not mazeUi.super_pacgums and (
+                    mazeUi.current_level + 1 >= len(parser.config.levels)):
                 victory_screen = VictoryScreen(mazeUi.screen, parser.config,
                                                mazeUi.player.score)
                 mazeUi.back_to_menu = victory_screen.run()
