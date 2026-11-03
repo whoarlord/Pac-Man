@@ -6,9 +6,7 @@ except ImportError:
     print("Error: the 'mazegenerator' package is not installed. "
           "Install it first (make install).", file=sys.stderr)
     sys.exit(1)
-from .EntitiesAdapter import EntitiesAdapter
-from .. import (EntityFactory, Ghost, Player, MovementEntity,
-                MovingDirection)
+from .. import (EntityFactory, Ghost, Player, MovingDirection)
 from ..Entities.Pacgums import Pacgum
 from ..Config.ConfigParser import GameConfigModel
 from typing import Tuple, Callable
@@ -78,10 +76,10 @@ class MazeUi:
         seed = self.config.seed if self.current_level == 0 else 0
         try:
             self.maze: MazeGenerator = MazeGenerator((width, height),
-                                        perfect=False, seed=seed)
+                                                     perfect=False, seed=seed)
         except Exception as e:
             print(f"Error: The maze generator could not create the map of "
-                    f"{width}x{height} ({e}).", file=sys.stderr)
+                  f"{width}x{height} ({e}).", file=sys.stderr)
             pygame.quit()
             sys.exit(1)
 

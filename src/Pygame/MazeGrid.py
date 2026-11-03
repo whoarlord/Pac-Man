@@ -1,5 +1,5 @@
 from typing import Tuple
-from pygame import Surface, display, Rect, font
+from pygame import Rect
 
 
 class MazeGrid:
@@ -66,12 +66,12 @@ class MazeGrid:
         return Rect(cell[0], cell[1], x_increment, y_increment)
 
     def calculate_pixels_tuple(self, coordinates: Tuple[int, int]
-                                ) -> Tuple[int, int]:
+                               ) -> Tuple[int, int]:
         x_increment = (self.window_width - self.margin) / self.width
         y_increment = (self.maze_height - self.margin) / self.height
         return (self.margin + int(x_increment * (coordinates[0])),
                 self.margin + self.margin_top_height + int(y_increment *
-                                                (coordinates[1])))
+                                                           (coordinates[1])))
 
     def calculate_center(self) -> Tuple[int, int]:
         x = int((self.width - 1) / 2)

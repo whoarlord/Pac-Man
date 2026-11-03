@@ -120,6 +120,8 @@ class MazeRenderer:
         self.draw_pacgums()
         self.place_entity(self.game_state.player)
         for ghost in self.game_state.ghosts:
+            if ghost.is_eaten():
+                continue
             self.place_entity(ghost)
         self.draw_hud()
         self.check_collisions()
@@ -143,8 +145,8 @@ class MazeRenderer:
             orig_w, orig_h = self.life_anim_image.get_size()
             new_w = int(orig_w * scale_factor)
             new_h = int(orig_h * scale_factor)
-            scaled_img = transform.scale(self.life_anim_image,
-                                                (new_w, new_h))
+            scaled_img = transform.scale(
+                self.life_anim_image, (new_w, new_h))
             rect = scaled_img.get_rect(center=(center_x, center_y))
             self.screen.blit(scaled_img, rect.topleft)
         else:
@@ -350,11 +352,13 @@ class MazeRenderer:
 
     def eat_pacgums(self) -> None:
         for pacgum in list(self.pacgums):
-            if pacgum.x == self.game_state.player.x and pacgum.y == self.game_state.player.y:
+            if (pacgum.x == self.game_state.player.x and
+                    pacgum.y == self.game_state.player.y):
                 self.pacgums.remove(pacgum)
                 self.game_state.player.add_pacgum_points()
         for pacgum in list(self.super_pacgums):
-            if pacgum.x == self.game_state.player.x and pacgum.y == self.game_state.player.y:
+            if (pacgum.x == self.game_state.player.x and
+                    pacgum.y == self.game_state.player.y):
                 self.super_pacgums.remove(pacgum)
                 self.game_state.player.add_super_pacgum_points()
                 self.game_state.player.power_up()
@@ -367,7 +371,8 @@ class MazeRenderer:
         px_jugador = self.maze_grid.calculate_pixels_tuple(
             (self.game_state.player.x, self.game_state.player.y))
         self.game_state.player.set_pixels(px_jugador)
-        self.game_state.player.set_current_direction(MovingDirection.NOT_MOVING)
+        self.game_state.player.set_current_direction(
+            MovingDirection.NOT_MOVING)
         self.game_state.player.desired_direction = MovingDirection.NOT_MOVING
 
     def lose_life_and_reset(self) -> None:
@@ -391,6 +396,8 @@ class MazeRenderer:
         p_down = self.game_state.player.y_pixel + height_c - tolerance
 
         for ghost in self.game_state.ghosts:
+            if ghost.is_eaten():
+                continue
             g_left = ghost.x_pixel + tolerance
             g_right = ghost.x_pixel + width_c - tolerance
             g_up = ghost.y_pixel + tolerance
@@ -531,7 +538,8 @@ class MazeRenderer:
             player = self.game_state.player
             if player.is_powered_up:
                 self.game_state.power_up_timer += dt
-                if self.game_state.power_up_timer >= self.game_state.POWER_UP_DURATION:
+                if (self.game_state.power_up_timer >=
+                        self.game_state.POWER_UP_DURATION):
                     player.power_down()
                     for ghost in self.game_state.ghosts:
                         ghost.scared = False
@@ -540,7 +548,8 @@ class MazeRenderer:
                 if ghost.is_eaten():
                     ghost.respawn_timer = max(0, ghost.respawn_timer - dt)
             self.game_state.level_timer += dt
-            if self.game_state.level_timer >= self.game_state.config.level_max_time * 1000:
+            if (self.game_state.level_timer >=
+                    self.game_state.config.level_max_time * 1000):
                 print("Time is up")
                 self.lose_life_and_reset()
                 print(f"Remaining lives: {player.lives}")
@@ -558,7 +567,8 @@ class MazeRenderer:
                     for ghost in self.game_state.ghosts:
                         if ghost.is_eaten():
                             continue
-                        if ghost.current_direction != MovingDirection.NOT_MOVING:
+                        if (ghost.current_direction !=
+                                MovingDirection.NOT_MOVING):
                             self.calculate_next_movement(ghost)
                         else:
                             if ghost.is_scared():
