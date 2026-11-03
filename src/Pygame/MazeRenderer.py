@@ -95,8 +95,9 @@ class MazeRenderer:
         for i, text in enumerate(texts):
             image = self.font.render(text, True, (255, 255, 255))
             x = 20 + i * (self.maze_grid.window_width // 4)
-            y = self.maze_grid.maze_height + (self.maze_grid.hud_height -
-                                              image.get_height()) // 2
+            y = (self.maze_grid.margin_top_height
+                 + self.maze_grid.maze_height
+                 + (self.maze_grid.hud_height - image.get_height()) // 2)
             self.screen.blit(image, (x, y))
 
     def draw_icons(self) -> None:
@@ -363,7 +364,7 @@ class MazeRenderer:
                 self.game_state.player.add_super_pacgum_points()
                 self.game_state.player.power_up()
                 self.game_state.update_if_ghost_is_eaten()
-                self.power_up_timer = 0
+                self.game_state.power_up_timer = 0
 
     def reset_player_position(self) -> None:
         self.game_state.player.x = int((self.maze_grid.width - 1) / 2)
@@ -388,7 +389,7 @@ class MazeRenderer:
             return
         width_c, height_c = self.maze_grid.get_cell_size()
 
-        tolerance = 6
+        tolerance = min(6, int(min(width_c, height_c) / 4))
 
         p_left = self.game_state.player.x_pixel + tolerance
         p_right = self.game_state.player.x_pixel + width_c - tolerance

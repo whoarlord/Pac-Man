@@ -58,8 +58,10 @@ if __name__ == '__main__':
                                             parser.config,
                                             mazeUi.player.score)
                 mazeUi.back_to_menu = end_screen.run()
-            elif not mazeUi.pacgums and not mazeUi.super_pacgums and (
-                    mazeUi.current_level + 1 >= len(parser.config.levels)):
+            elif (not maze_renderer.pacgums
+                    and not maze_renderer.super_pacgums
+                    and mazeUi.current_level + 1
+                    >= len(parser.config.levels)):
                 victory_screen = VictoryScreen(maze_renderer.screen,
                                                parser.config,
                                                mazeUi.player.score)

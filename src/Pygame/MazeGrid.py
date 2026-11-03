@@ -13,9 +13,10 @@ class MazeGrid:
         self.window_width = window_width
         self.window_height = window_height
         self.hud_height = hud_height
-        self.maze_height = self.window_height - self.hud_height
-        self.margin = margin
         self.margin_top_height = margin_top_height
+        self.maze_height = (self.window_height - self.hud_height
+                            - self.margin_top_height)
+        self.margin = margin
         self.thick = thick
         self.lines_color = lines_color
         self.cell_size: Tuple[int, int] = self.calculate_cell_size()
