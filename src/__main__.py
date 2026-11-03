@@ -63,10 +63,6 @@ if __name__ == '__main__':
 
             if not mazeUi.back_to_menu:
                 break
-    except pygame.error as e:
-        print(f"Pygame error: Could not initialize the graphics display "
-              f"({e}).", file=sys.stderr)
-        exit_code = 1
     except KeyboardInterrupt:
         print("\nGame closed cleanly by the user (Ctrl+C).")
     except (FileNotFoundError, pygame.error) as e:
