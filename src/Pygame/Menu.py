@@ -47,13 +47,18 @@ class MainMenu:
 
         lines = [
             "CONTROLS:",
-            "• Use ARROW KEYS or W/A/S/D to move Pac-Man.",
+            "• ARROW KEYS or W/A/S/D: move Pac-Man.",
+            "• ESC or P: pause / resume the game.",
             "",
             "RULES:",
-            "• Eat all the small Pac-gums to clear the level.",
-            "• Eat Super Pac-gums to turn ghosts vulnerable and eat them!",
-            "• Avoid ghosts when they are in their normal state.",
-            "• Complete each level before the timer reaches 0."
+            "• Eat all the Pac-gums and Super Pac-gums to clear the level.",
+            "• A Super Pac-gum makes ghosts edible for 7 seconds.",
+            "• An eaten ghost returns to its corner and comes back after 5 s.",
+            "• Touching a ghost that is not edible costs a life.",
+            "• If the level timer reaches 0, you also lose a life.",
+            "",
+            "CHEATS:",
+            "• I: invincible   V: extra life   B: speed   F: freeze   L: skip",
         ]
 
         for i, line in enumerate(lines):
