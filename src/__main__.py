@@ -34,8 +34,8 @@ if __name__ == '__main__':
         menu.state = "MAIN"
         menu.run()
 
-        maze_renderer.reset()
         maze_renderer.setup_entities()
+        maze_renderer.load_first_level()
         maze_renderer.event_loop()
 
         if not mazeUi.back_to_menu:

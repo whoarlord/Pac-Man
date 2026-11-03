@@ -16,7 +16,7 @@ class MazeRenderer:
         self.screen: Surface = display.set_mode(
             self.maze_grid.get_window_size())
         self.screen.fill("black")
-        self.pause_veil = self.initialize_veil()
+        self.initialize_veil()
         self.font = font.Font(None, 40)
         self.title_font = font.Font(None, 80)
         self.pause_options = ["Resume", "Return to Main Menu"]
@@ -165,8 +165,8 @@ class MazeRenderer:
                                         int((self.maze_grid.height - 1) / 2))
         pixels: Tuple[int, int] = self.maze_grid.calculate_pixels_tuple(
             coordinates)
-        self.place_element(player, coordinates)
-        self.player = (self.game_state.entity_factory.create_player(
+        self.place_element(player, pixels)
+        self.game_state.player = (self.game_state.entity_factory.create_player(
             coordinates, pixels, player, self.can_move,
             self.game_state.config.points_per_pacgum,
             self.game_state.config.points_per_super_pacgum,
@@ -174,16 +174,16 @@ class MazeRenderer:
             self.game_state.config.lives))
 
     def setup_ghosts(self) -> None:
-        self.ghosts = []
+        ghosts = []
         red_ghost = self.entity_adapter.makeRedGhostImage()
         entity_factory = self.game_state.entity_factory
         coordinates: Tuple[int, int] = (0, 0)
         pixels: Tuple[int, int] = self.maze_grid.calculate_pixels_tuple(
             coordinates)
         self.place_element(red_ghost, pixels)
-        self.ghosts.append(
+        ghosts.append(
             entity_factory.create_ghost(coordinates, pixels, red_ghost,
-                                        self.game_state.can_move,
+                                        self.can_move,
                                         Ghost.GhostColor.RED)
         )
 
@@ -191,9 +191,9 @@ class MazeRenderer:
         coordinates = (0, self.maze_grid.height - 1)
         pixels = self.maze_grid.calculate_pixels_tuple(coordinates)
         self.place_element(yellow_ghost, pixels)
-        self.ghosts.append(
+        ghosts.append(
             entity_factory.create_ghost(coordinates, pixels, yellow_ghost,
-                                        self.game_state.can_move,
+                                        self.can_move,
                                         Ghost.GhostColor.YELLOW)
         )
 
@@ -201,9 +201,9 @@ class MazeRenderer:
         coordinates = (self.maze_grid.width - 1, 0)
         pixels = self.maze_grid.calculate_pixels_tuple(coordinates)
         self.place_element(blue_ghost, pixels)
-        self.ghosts.append(
+        ghosts.append(
             entity_factory.create_ghost(coordinates, pixels, blue_ghost,
-                                        self.game_state.can_move,
+                                        self.can_move,
                                         Ghost.GhostColor.BLUE)
         )
 
@@ -211,11 +211,12 @@ class MazeRenderer:
         coordinates = (self.maze_grid.width - 1, self.maze_grid.height - 1)
         pixels = self.maze_grid.calculate_pixels_tuple(coordinates)
         self.place_element(pink_ghost, pixels)
-        self.ghosts.append(
+        ghosts.append(
             entity_factory.create_ghost(coordinates, pixels,
-                                        pink_ghost, self.game_state.can_move,
+                                        pink_ghost, self.can_move,
                                         Ghost.GhostColor.PINK)
         )
+        self.game_state.ghosts = ghosts
 
     def setup_pacgums(self) -> None:
         self.pacgums = []
@@ -266,30 +267,30 @@ class MazeRenderer:
 
     def eat_pacgums(self) -> None:
         for pacgum in list(self.pacgums):
-            if pacgum.x == self.player.x and pacgum.y == self.player.y:
+            if pacgum.x == self.game_state.player.x and pacgum.y == self.game_state.player.y:
                 self.pacgums.remove(pacgum)
-                self.player.add_pacgum_points()
+                self.game_state.player.add_pacgum_points()
         for pacgum in list(self.super_pacgums):
-            if pacgum.x == self.player.x and pacgum.y == self.player.y:
+            if pacgum.x == self.game_state.player.x and pacgum.y == self.game_state.player.y:
                 self.super_pacgums.remove(pacgum)
-                self.player.add_super_pacgum_points()
-                self.player.power_up()
+                self.game_state.player.add_super_pacgum_points()
+                self.game_state.player.power_up()
                 self.power_up_timer = 0
 
     def reset_player_position(self) -> None:
-        self.player.x = int((self.maze_grid.width - 1) / 2)
-        self.player.y = int((self.maze_grid.height - 1) / 2)
+        self.game_state.player.x = int((self.maze_grid.width - 1) / 2)
+        self.game_state.player.y = int((self.maze_grid.height - 1) / 2)
         px_jugador = self.maze_grid.calculate_pixels_tuple(
-            (self.player.x, self.player.y))
-        self.player.set_pixels(px_jugador)
-        self.player.set_current_direction(MovingDirection.NOT_MOVING)
-        self.player.desired_direction = MovingDirection.NOT_MOVING
+            (self.game_state.player.x, self.game_state.player.y))
+        self.game_state.player.set_pixels(px_jugador)
+        self.game_state.player.set_current_direction(MovingDirection.NOT_MOVING)
+        self.game_state.player.desired_direction = MovingDirection.NOT_MOVING
 
     def lose_life_and_reset(self) -> None:
-        self.player.lose_life()
-        self.player.power_down()
+        self.game_state.player.lose_life()
+        self.game_state.player.power_down()
         self.power_up_timer = 0
-        if self.player.lives <= 0:
+        if self.game_state.player.lives <= 0:
             self.running = False
             return
         self.reset_player_position()
@@ -300,16 +301,16 @@ class MazeRenderer:
             ghost.set_current_direction(MovingDirection.NOT_MOVING)
 
     def check_collisions(self) -> None:
-        if (self.player.is_invincible()):
+        if (self.game_state.player.is_invincible()):
             return
         width_c, height_c = self.maze_grid.get_cell_size()
 
         tolerance = 6
 
-        p_left = self.player.x_pixel + tolerance
-        p_right = self.player.x_pixel + width_c - tolerance
-        p_up = self.player.y_pixel + tolerance
-        p_down = self.player.y_pixel + height_c - tolerance
+        p_left = self.game_state.player.x_pixel + tolerance
+        p_right = self.game_state.player.x_pixel + width_c - tolerance
+        p_up = self.game_state.player.y_pixel + tolerance
+        p_down = self.game_state.player.y_pixel + height_c - tolerance
 
         for ghost in self.game_state.ghosts:
             g_left = ghost.x_pixel + tolerance
@@ -321,8 +322,8 @@ class MazeRenderer:
                          p_down < g_up or p_up > g_down)
 
             if not separated:
-                if self.player.is_powered_up:
-                    self.player.add_ghost_points()
+                if self.game_state.player.is_powered_up:
+                    self.game_state.player.add_ghost_points()
                     ghost.respawn()
                     px_ghost = self.maze_grid.calculate_pixels_tuple(
                         (ghost.x, ghost.y))
@@ -330,9 +331,15 @@ class MazeRenderer:
                     ghost.set_current_direction(MovingDirection.NOT_MOVING)
                 else:
                     self.lose_life_and_reset()
-                    lives = self.player.lives
+                    lives = self.game_state.player.lives
                     print(f"¡Te han tocado! Vidas restantes: {lives}")
                     break
+
+    def load_first_level(self) -> None:
+        maze_size = self.game_state.load_level(0)
+        width, height = maze_size
+        self.maze_grid.reset(width, height)
+        self.initialize_level()
 
     def load_level(self) -> None:
         maze_size = self.game_state.next_level()
@@ -344,13 +351,15 @@ class MazeRenderer:
 
     def initialize_level(self):
         self.entity_adapter = EntitiesAdapter(self.maze_grid.get_cell_size())
-        self.player.set_image(self.entity_adapter.makePlayerImage(
+        self.game_state.player.set_image(self.entity_adapter.makePlayerImage(
             MovingDirection.NOT_MOVING))
         self.reset_player_position()
         self.setup_ghosts()
         self.setup_pacgums()
 
     def setup_entities(self) -> None:
+        self.game_state.initializeMaze(self.maze_grid.width,
+                                       self.maze_grid.height)
         self.setup_player()
         self.setup_ghosts()
         self.setup_pacgums()
@@ -375,21 +384,20 @@ class MazeRenderer:
             text = self.font.render(option, True, color)
             x = (self.maze_grid.window_width - text.get_width()) // 2
             self.screen.blit(text, (x, 450 + i * 70))
-            
+
     def handle_pause_key(self, key: int) -> None:
+        gs = self.game_state
         if key in (K_UP, K_w):
-            self.pause_index = ((self.pause_index - 1)
-                                % len(self.pause_options))
+            gs.pause_index = (gs.pause_index - 1) % len(self.pause_options)
         elif key in (K_DOWN, K_s):
-            self.pause_index = ((self.pause_index + 1)
-                                % len(self.pause_options))
+            gs.pause_index = (gs.pause_index + 1) % len(self.pause_options)
         elif key in (K_ESCAPE, K_p):
-            self.paused = False
+            gs.paused = False
         elif key in (K_RETURN, K_KP_ENTER):
-            self.paused = False
-            if self.pause_index == 1:
-                self.back_to_menu = True
-                self.running = False
+            gs.paused = False
+            if gs.pause_index == 1:
+                gs.back_to_menu = True
+                gs.running = False
 
     def can_move(self, origin: tuple[int, int],
                  target: tuple[int, int]) -> bool:
@@ -417,11 +425,11 @@ class MazeRenderer:
         clock = time.Clock()
         movement_interval = 35
         time_counter = 0
-        self.running = True
-        while self.running:
+        self.game_state.running = True
+        while self.game_state.running:
             self.draw_map()
             dt = clock.tick(60)
-            self.game_state.bind_events()
+            self.game_state.bind_events(self.handle_pause_key)
             if self.game_state.paused:
                 self.draw_pause_menu()
                 display.flip()
@@ -429,16 +437,16 @@ class MazeRenderer:
             time_counter += dt
             player = self.game_state.player
             if player.is_powered_up:
-                self.power_up_timer += dt
-                if self.power_up_timer >= self.game_state.POWER_UP_DURATION:
+                self.game_state.power_up_timer += dt
+                if self.game_state.power_up_timer >= self.game_state.POWER_UP_DURATION:
                     player.power_down()
-                    self.power_up_timer = 0
-            self.level_timer += dt
-            if self.level_timer >= self.game_state.config.level_max_time * 1000:
+                    self.game_state.power_up_timer = 0
+            self.game_state.level_timer += dt
+            if self.game_state.level_timer >= self.game_state.config.level_max_time * 1000:
                 print("Tiempo agotado")
                 self.lose_life_and_reset()
                 print(f"Vidas restantes: {player.lives}")
-                self.level_timer = 0
+                self.game_state.level_timer = 0
             self.eat_pacgums()
             if not self.pacgums:
                 self.load_level()

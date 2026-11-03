@@ -28,7 +28,7 @@ class MazeUi:
         self.ghosts: list[Ghost] = []
         self.pacgums: list[Pacgum] = []
         self.super_pacgums: list[Pacgum] = []
-        self.entity_factory: EntityFactory
+        self.entity_factory: EntityFactory = EntityFactory()
         self.power_up_timer = 0
         self.POWER_UP_DURATION = 7000
         self.level_timer = 0

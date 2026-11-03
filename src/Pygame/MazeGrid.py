@@ -4,7 +4,7 @@ from pygame import Surface, display, Rect, font
 
 class MazeGrid:
     def __init__(self, width: int, height: int,
-                 window_width: int = 1920, window_height: int = 1020,
+                 window_width: int = 1920, window_height: int = 1080,
                  hud_height: int = 60, margin: int = 5, thick: int = 3,
                  lines_color: Tuple[int, int, int] = (255, 255, 255)):
         self.width = width
@@ -44,7 +44,7 @@ class MazeGrid:
         return self.height
 
     def get_window_size(self) -> Tuple[int, int]:
-        return (self.window_height, self.window_width)
+        return (self.window_width, self.window_height)
 
     def get_increments(self) -> Tuple[int, int]:
         x_increment = int(((self.window_width - self.margin)
@@ -56,7 +56,7 @@ class MazeGrid:
     def get_increments_with_division(self, division: int = 1
                                      ) -> Tuple[int, int]:
         increments = list(self.get_increments())
-        return (increments[0] / division, increments[1] / division)
+        return (int(increments[0] / division), int(increments[1] / division))
 
     def calculate_rect_for_cell(self, cell: Tuple[int, int]) -> Rect:
         x_increment = (self.window_width - self.margin) / self.width
