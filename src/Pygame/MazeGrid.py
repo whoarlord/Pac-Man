@@ -21,7 +21,7 @@ class MazeGrid:
         self.lines_color = lines_color
         self.cell_size: Tuple[int, int] = self.calculate_cell_size()
 
-    def reset(self, width: int, height: int):
+    def reset(self, width: int, height: int) -> None:
         self.width = width
         self.height = height
         self.cell_size = self.calculate_cell_size()
@@ -31,7 +31,7 @@ class MazeGrid:
         cell_height = int((self.maze_height - self.margin) / self.height)
         return (cell_width, cell_height)
 
-    def get_cell_size(self) -> int:
+    def get_cell_size(self) -> tuple[int, int]:
         return self.cell_size
 
     def get_lines_color(self) -> Tuple[int, int, int]:
@@ -56,7 +56,7 @@ class MazeGrid:
                            / self.height))
         return (x_increment, y_increment)
 
-    def get_increments_with_division(self, division: int = 1
+    def get_increments_with_division(self, division: float = 1.0
                                      ) -> Tuple[int, int]:
         increments = list(self.get_increments())
         return (int(increments[0] / division), int(increments[1] / division))

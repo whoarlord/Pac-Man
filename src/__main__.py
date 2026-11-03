@@ -8,7 +8,6 @@ from src.Pygame.Menu import MainMenu
 from src.Pygame.MazeGrid import MazeGrid
 from src.Pygame.MazeRenderer import MazeRenderer
 from src.Pygame.EndScreens import GameOverScreen, VictoryScreen
-import traceback
 
 
 if __name__ == '__main__':
@@ -28,29 +27,24 @@ if __name__ == '__main__':
         entityFactory = EntityFactory()
 
         while True:
-            print("maze Ui")
             mazeUi = MazeUi(parser.config)
-            print("width")
+
             width, height = mazeUi.get_actual_level_size()
             maze_grid = MazeGrid(width, height)
-            print("maze grid")
+
             entity_adapter = EntitiesAdapter(maze_grid.get_cell_size())
-            print("maze renderer")
+
             maze_renderer = MazeRenderer(maze_grid, mazeUi, entity_adapter)
             entity_adapter.preload_images()
-            print("menu")
+
             menu = MainMenu(maze_renderer.screen, parser.config)
 
             menu.state = "MAIN"
-            print("urning menu")
             menu.run()
 
             # mazeUi.reset()
-            print("settting entities")
             maze_renderer.setup_entities()
-            print("loading first level")
             maze_renderer.load_first_level()
-            print("event_loop")
             maze_renderer.event_loop()
 
             if mazeUi.player.lives <= 0:
@@ -69,6 +63,10 @@ if __name__ == '__main__':
 
             if not mazeUi.back_to_menu:
                 break
+    except pygame.error as e:
+        print(f"Pygame error: Could not initialize the graphics display "
+              f"({e}).", file=sys.stderr)
+        exit_code = 1
     except KeyboardInterrupt:
         print("\nGame closed cleanly by the user (Ctrl+C).")
     except (FileNotFoundError, pygame.error) as e:
@@ -76,14 +74,7 @@ if __name__ == '__main__':
         exit_code = 1
     except Exception as e:
         print(f"Unexpected error: {e}", file=sys.stderr)
-        traceback.print_exc()
         exit_code = 1
     finally:
         pygame.quit()
     sys.exit(exit_code)
-
-
-""" except pygame.error as e:
-        print(f"Pygame error: Could not initialize the graphics display "
-                f"({e}).", file=sys.stderr)
-        sys.exit(1) """

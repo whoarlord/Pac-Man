@@ -42,12 +42,12 @@ class MazeUi:
         self.back_to_menu = False
         self.running = True
 
-    def get_actual_level_size(self):
+    def get_actual_level_size(self) -> tuple[int, int]:
         width = self.config.levels[self.current_level].width
         height = self.config.levels[self.current_level].height
         return (width, height)
 
-    def reset(self, width: int, height: int):
+    def reset(self, width: int, height: int) -> None:
         self.initializeMaze(width, height)
         self.ghosts = []
         self.pacgums = []
@@ -62,10 +62,10 @@ class MazeUi:
         self.life_anim_duration = 1000
         self.life_anim_image = None
 
-    def get_maze_cell(self, x: int, y: int):
-        return self.maze.maze[y][x]
+    def get_maze_cell(self, x: int, y: int) -> int:
+        return int(self.maze.maze[y][x])
 
-    def get_remaining_time(self):
+    def get_remaining_time(self) -> int:
         return max(0, self.config.level_max_time
                    - self.level_timer // 1000)
 
@@ -99,7 +99,7 @@ class MazeUi:
         self.level_timer = 0
         return self.load_level(self.current_level + 1)
 
-    def update_if_ghost_is_eaten(self):
+    def scare_ghosts(self) -> None:
         for ghost in self.ghosts:
             if not ghost.is_eaten():
                 ghost.scared = True
@@ -116,9 +116,10 @@ class MazeUi:
             ghost.respawn_timer = 0
             ghost.scared = False
 
-    def bind_events(self, handle_pause: Callable[int, None]) -> dict:
-        result: dict = {'extra_life': False,
-                        'level_skip': False}
+    def bind_events(self, handle_pause: Callable[[int], None]
+                    ) -> dict[str, bool]:
+        result: dict[str, bool] = {'extra_life': False,
+                                   'level_skip': False}
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False

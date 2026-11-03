@@ -27,7 +27,7 @@ class MazeRenderer:
         self.life_anim_duration = 1000
         self.RESPAWN_DELAY = 5000
 
-    def initialize_veil(self):
+    def initialize_veil(self) -> None:
         self.pause_veil = Surface(self.maze_grid.get_window_size())
         self.pause_veil.set_alpha(150)
         self.pause_veil.fill((0, 0, 0))
@@ -196,7 +196,7 @@ class MazeRenderer:
         self.pacgums.clear()
         self.super_pacgums.clear()
 
-    def make_ghost_by_color(self, ghost: Ghost):
+    def make_ghost_by_color(self, ghost: Ghost) -> None:
         scared: bool = ghost.is_scared()
         if ghost.color == Ghost.GhostColor.RED:
             img = self.entity_adapter.makeRedGhostImage(scared)
@@ -363,7 +363,7 @@ class MazeRenderer:
                 self.super_pacgums.remove(pacgum)
                 self.game_state.player.add_super_pacgum_points()
                 self.game_state.player.power_up()
-                self.game_state.update_if_ghost_is_eaten()
+                self.game_state.scare_ghosts()
                 self.game_state.power_up_timer = 0
 
     def reset_player_position(self) -> None:
@@ -437,7 +437,7 @@ class MazeRenderer:
         self.maze_grid.reset(width, height)
         self.initialize_level()
 
-    def initialize_level(self):
+    def initialize_level(self) -> None:
         self.entity_adapter = EntitiesAdapter(self.maze_grid.get_cell_size())
         self.game_state.player.set_image(self.entity_adapter.makePlayerImage(
             MovingDirection.NOT_MOVING))
