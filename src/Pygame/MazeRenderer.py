@@ -1,5 +1,6 @@
 from src.Pygame import MazeGrid, MazeUi, EntitiesAdapter
 from pygame import (Surface, draw, display, font, time,
+                    Rect, transform,
                     K_UP, K_w, K_DOWN, K_s, K_ESCAPE,
                     K_p, K_RETURN, K_KP_ENTER)
 from typing import Tuple
@@ -20,6 +21,11 @@ class MazeRenderer:
         self.font = font.Font(None, 40)
         self.title_font = font.Font(None, 80)
         self.pause_options = ["Resume", "Return to Main Menu"]
+        self.life_anim_active = False
+        self.life_anim_time = 0
+        self.life_anim_image: Surface | None = None
+        self.life_anim_duration = 1000
+        self.RESPAWN_DELAY = 5000
 
     def initialize_veil(self):
         self.pause_veil = Surface(self.maze_grid.get_window_size())
@@ -94,10 +100,19 @@ class MazeRenderer:
             self.screen.blit(image, (x, y))
 
     def draw_icons(self) -> None:
+        current_x = 20
+        margin_y = 15
         if (self.game_state.player.is_invincible()):
             img = self.entity_adapter.make_invincible_icon()
-            self.screen.blit(img,
-                             self.maze_grid.calculate_rect_for_cell((0, 0)))
+            self.screen.blit(img, (current_x, margin_y))
+            current_x += img.get_width() + 20
+        if (self.game_state.player.is_speed_boost()):
+            img_speed = self.entity_adapter.make_speed_up_icon()
+            self.screen.blit(img_speed, (current_x, margin_y))
+            current_x += img_speed.get_width() + 20
+        if (self.game_state.player.is_ghost_freeze()):
+            img_ghost = self.entity_adapter.make_ghost_freeze_icon()
+            self.screen.blit(img_ghost, (current_x, margin_y))
 
     def draw_map(self) -> None:
         self.screen.fill("black")
@@ -109,9 +124,77 @@ class MazeRenderer:
         self.draw_hud()
         self.check_collisions()
         self.draw_icons()
+        dt = time.Clock().tick(60)
+        self.draw_life_extra_animation(dt)
+
+    def draw_life_extra_animation(self, dt: int) -> None:
+        if not self.life_anim_active or not self.life_anim_image:
+            return
+        self.life_anim_time += dt
+        if self.life_anim_time >= self.life_anim_duration:
+            self.life_anim_active = False
+            return
+        progress = self.life_anim_time / self.life_anim_duration
+        center_x, center_y = self.maze_grid.calculate_center_pixels()
+
+        if progress <= 0.6:
+            phase_prog = progress / 0.6
+            scale_factor = 0.1 + (5.9 * phase_prog)
+            orig_w, orig_h = self.life_anim_image.get_size()
+            new_w = int(orig_w * scale_factor)
+            new_h = int(orig_h * scale_factor)
+            scaled_img = transform.scale(self.life_anim_image,
+                                                (new_w, new_h))
+            rect = scaled_img.get_rect(center=(center_x, center_y))
+            self.screen.blit(scaled_img, rect.topleft)
+        else:
+            phase_prog = (progress - 0.6) / 0.4
+            orig_w, orig_h = self.life_anim_image.get_size()
+            base_w = int(orig_w * 6.0)
+            base_h = int(orig_h * 6.0)
+            offset = int(350 * phase_prog)
+            alpha = max(0, int(255 * (1.0 - phase_prog)))
+            base_img = transform.scale(self.life_anim_image,
+                                       (base_w, base_h))
+            w_half, h_half = base_w // 2, base_h // 2
+            quads = [
+                (base_img.subsurface(Rect(0, 0, w_half, h_half)),
+                    -offset, -offset),         # Top-Left
+                (base_img.subsurface(Rect(w_half, 0, w_half, h_half)),
+                    offset, -offset),      # Top-Right
+                (base_img.subsurface(Rect(0, h_half, w_half, h_half)),
+                    -offset, offset),      # Bottom-Left
+                (base_img.subsurface(Rect(w_half, h_half, w_half,
+                                          h_half)), offset, offset)
+            ]
+            for quad_img, off_x, off_y in quads:
+                quad_surface = quad_img.copy()
+                quad_surface.set_alpha(alpha)
+                q_rect = quad_surface.get_rect()
+                q_rect.center = (center_x + off_x, center_y + off_y)
+                self.screen.blit(quad_surface, q_rect.topleft)
+
+    def trigger_level_skip_effect(self) -> None:
+        fire_efect = Surface(self.maze_grid.get_window_size())
+        fire_efect.set_alpha(120)
+        fire_efect.fill((255, 140, 0))
+        self.screen.blit(fire_efect, (0, 0))
+
+        text_font = font.Font(None, 120)
+        super_text = text_font.render("FIRE SALE: LEVEL SKIP", True,
+                                      (255, 238, 0))
+        text_rect = super_text.get_rect(
+            center=self.maze_grid.calculate_center_pixels())
+        self.screen.blit(super_text, text_rect.topleft)
+
+        display.flip()
+        time.wait(800)
+
+        self.pacgums.clear()
+        self.super_pacgums.clear()
 
     def make_ghost_by_color(self, ghost: Ghost):
-        scared: bool = self.game_state.player.is_powered_up
+        scared: bool = ghost.is_scared()
         if ghost.color == Ghost.GhostColor.RED:
             img = self.entity_adapter.makeRedGhostImage(scared)
             ghost.set_image(img)
@@ -126,12 +209,12 @@ class MazeRenderer:
             ghost.set_image(img)
 
     def calculate_next_movement(self, entity: MovementEntity) -> None:
-        division: int = 10
+        division: float = 10.0
         if (isinstance(entity, Player)):
-            division = 5
+            division = 2.5 if entity.is_speed_boost() else 5.0
             img = self.entity_adapter.makePlayerImage(entity.current_direction)
             entity.set_image(img)
-        else:
+        elif isinstance(entity, Ghost):
             self.make_ghost_by_color(entity)
         x_increment, y_increment = self.maze_grid.get_increments_with_division(
             division)
@@ -275,6 +358,7 @@ class MazeRenderer:
                 self.super_pacgums.remove(pacgum)
                 self.game_state.player.add_super_pacgum_points()
                 self.game_state.player.power_up()
+                self.game_state.update_if_ghost_is_eaten()
                 self.power_up_timer = 0
 
     def reset_player_position(self) -> None:
@@ -287,15 +371,9 @@ class MazeRenderer:
         self.game_state.player.desired_direction = MovingDirection.NOT_MOVING
 
     def lose_life_and_reset(self) -> None:
-        self.game_state.player.lose_life()
-        self.game_state.player.power_down()
-        self.power_up_timer = 0
-        if self.game_state.player.lives <= 0:
-            self.running = False
-            return
+        self.game_state.lose_life_and_reset()
         self.reset_player_position()
         for ghost in self.game_state.ghosts:
-            ghost.respawn()
             px_g = self.maze_grid.calculate_pixels_tuple((ghost.x, ghost.y))
             ghost.set_pixels(px_g)
             ghost.set_current_direction(MovingDirection.NOT_MOVING)
@@ -322,7 +400,9 @@ class MazeRenderer:
                          p_down < g_up or p_up > g_down)
 
             if not separated:
-                if self.game_state.player.is_powered_up:
+                if ghost.is_scared():
+                    ghost.scared = False
+                    ghost.respawn_timer = self.RESPAWN_DELAY
                     self.game_state.player.add_ghost_points()
                     ghost.respawn()
                     px_ghost = self.maze_grid.calculate_pixels_tuple(
@@ -332,7 +412,7 @@ class MazeRenderer:
                 else:
                     self.lose_life_and_reset()
                     lives = self.game_state.player.lives
-                    print(f"¡Te han tocado! Vidas restantes: {lives}")
+                    print(f"¡You have been touched! Remaining lives: {lives}")
                     break
 
     def load_first_level(self) -> None:
@@ -421,6 +501,18 @@ class MazeRenderer:
             return False
         return bool((actual_cell & wall) == 0)
 
+    def extra_life_animation(self) -> None:
+        self.life_anim_active = True
+        self.life_anim_time = 0
+        self.life_anim_image = (
+            self.entity_adapter.make_extra_live_icon())
+
+    def handle_animations(self, animations: dict[str, bool]) -> None:
+        if (animations.get('extra_life')):
+            self.extra_life_animation()
+        if (animations.get('level_skip')):
+            self.trigger_level_skip_effect()
+
     def event_loop(self) -> None:
         clock = time.Clock()
         movement_interval = 35
@@ -429,7 +521,8 @@ class MazeRenderer:
         while self.game_state.running:
             self.draw_map()
             dt = clock.tick(60)
-            self.game_state.bind_events(self.handle_pause_key)
+            animations = self.game_state.bind_events(self.handle_pause_key)
+            self.handle_animations(animations)
             if self.game_state.paused:
                 self.draw_pause_menu()
                 display.flip()
@@ -440,32 +533,37 @@ class MazeRenderer:
                 self.game_state.power_up_timer += dt
                 if self.game_state.power_up_timer >= self.game_state.POWER_UP_DURATION:
                     player.power_down()
+                    for ghost in self.game_state.ghosts:
+                        ghost.scared = False
                     self.game_state.power_up_timer = 0
+            for ghost in self.game_state.ghosts:
+                if ghost.is_eaten():
+                    ghost.respawn_timer = max(0, ghost.respawn_timer - dt)
             self.game_state.level_timer += dt
             if self.game_state.level_timer >= self.game_state.config.level_max_time * 1000:
-                print("Tiempo agotado")
+                print("Time is up")
                 self.lose_life_and_reset()
-                print(f"Vidas restantes: {player.lives}")
+                print(f"Remaining lives: {player.lives}")
                 self.game_state.level_timer = 0
             self.eat_pacgums()
-            if not self.pacgums:
+            if not self.pacgums and not self.super_pacgums:
                 self.load_level()
             if time_counter >= movement_interval:
                 if player.current_direction == MovingDirection.NOT_MOVING:
                     player.update_direction()
                 if player.current_direction != MovingDirection.NOT_MOVING:
                     self.calculate_next_movement(player)
-                    if player.current_direction == (MovingDirection.
-                                                    NOT_MOVING):
-                        player.update_direction()
                 player_pos = (player.x, player.y)
-                for ghost in self.game_state.ghosts:
-                    if ghost.current_direction != MovingDirection.NOT_MOVING:
-                        self.calculate_next_movement(ghost)
-                    else:
-                        if player.is_powered_up:
-                            ghost.run_from_player(player_pos)
+                if not player.is_ghost_freeze():
+                    for ghost in self.game_state.ghosts:
+                        if ghost.is_eaten():
+                            continue
+                        if ghost.current_direction != MovingDirection.NOT_MOVING:
+                            self.calculate_next_movement(ghost)
                         else:
-                            ghost.catch_player(player_pos)
+                            if ghost.is_scared():
+                                ghost.run_from_player(player_pos)
+                            else:
+                                ghost.catch_player(player_pos)
                 time_counter -= movement_interval
             display.flip()

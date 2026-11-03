@@ -7,6 +7,8 @@ from src.Pygame.EntitiesAdapter import EntitiesAdapter
 from src.Pygame.Menu import MainMenu
 from src.Pygame.MazeGrid import MazeGrid
 from src.Pygame.MazeRenderer import MazeRenderer
+from src.Pygame.EndScreens import GameOverScreen, VictoryScreen
+import traceback
 
 
 if __name__ == '__main__':
@@ -20,26 +22,66 @@ if __name__ == '__main__':
               file=sys.stderr)
         sys.exit(1)
 
-    parser = ConfigParser(config_path)
-    entityFactory = EntityFactory()
+    exit_code = 0
+    try:
+        parser = ConfigParser(config_path)
+        entityFactory = EntityFactory()
 
-    mazeUi = MazeUi(parser.config)
-    width, height = mazeUi.get_actual_level_size()
-    maze_grid = MazeGrid(width, height)
-    entity_adapter = EntitiesAdapter(maze_grid.get_cell_size())
-    maze_renderer = MazeRenderer(maze_grid, mazeUi, entity_adapter)
-    menu = MainMenu(maze_renderer.screen, parser.config)
+        while True:
+            print("maze Ui")
+            mazeUi = MazeUi(parser.config)
+            print("width")
+            width, height = mazeUi.get_actual_level_size()
+            maze_grid = MazeGrid(width, height)
+            print("maze grid")
+            entity_adapter = EntitiesAdapter(maze_grid.get_cell_size())
+            print("maze renderer")
+            maze_renderer = MazeRenderer(maze_grid, mazeUi, entity_adapter)
+            entity_adapter.preload_images()
+            print("menu")
+            menu = MainMenu(maze_renderer.screen, parser.config)
 
-    while True:
-        menu.state = "MAIN"
-        menu.run()
+            menu.state = "MAIN"
+            print("urning menu")
+            menu.run()
 
-        maze_renderer.setup_entities()
-        maze_renderer.load_first_level()
-        maze_renderer.event_loop()
+            # mazeUi.reset()
+            print("settting entities")
+            maze_renderer.setup_entities()
+            print("loading first level")
+            maze_renderer.load_first_level()
+            print("event_loop")
+            maze_renderer.event_loop()
 
-        if not mazeUi.back_to_menu:
-            break
+            if mazeUi.player.lives <= 0:
+                end_screen = GameOverScreen(maze_renderer.screen,
+                                            parser.config,
+                                            mazeUi.player.score)
+                mazeUi.back_to_menu = end_screen.run()
+            elif not mazeUi.pacgums and not mazeUi.super_pacgums and (
+                    mazeUi.current_level + 1 >= len(parser.config.levels)):
+                victory_screen = VictoryScreen(maze_renderer.screen,
+                                               parser.config,
+                                               mazeUi.player.score)
+                mazeUi.back_to_menu = victory_screen.run()
 
-    pygame.quit()
-    sys.exit(1)
+            if not mazeUi.back_to_menu:
+                break
+    except KeyboardInterrupt:
+        print("\nGame closed cleanly by the user (Ctrl+C).")
+    except (FileNotFoundError, pygame.error) as e:
+        print(f"Error: {e}", file=sys.stderr)
+        exit_code = 1
+    except Exception as e:
+        print(f"Unexpected error: {e}", file=sys.stderr)
+        traceback.print_exc()
+        exit_code = 1
+    finally:
+        pygame.quit()
+    sys.exit(exit_code)
+
+
+""" except pygame.error as e:
+        print(f"Pygame error: Could not initialize the graphics display "
+                f"({e}).", file=sys.stderr)
+        sys.exit(1) """

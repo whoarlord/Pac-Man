@@ -5,7 +5,8 @@ from pygame import Surface, display, Rect, font
 class MazeGrid:
     def __init__(self, width: int, height: int,
                  window_width: int = 1920, window_height: int = 1080,
-                 hud_height: int = 60, margin: int = 5, thick: int = 3,
+                 hud_height: int = 60, margin: int = 5,
+                 margin_top_height: int = 60, thick: int = 3,
                  lines_color: Tuple[int, int, int] = (255, 255, 255)):
         self.width = width
         self.height = height
@@ -14,6 +15,7 @@ class MazeGrid:
         self.hud_height = hud_height
         self.maze_height = self.window_height - self.hud_height
         self.margin = margin
+        self.margin_top_height = margin_top_height
         self.thick = thick
         self.lines_color = lines_color
         self.cell_size: Tuple[int, int] = self.calculate_cell_size()
@@ -64,13 +66,19 @@ class MazeGrid:
         return Rect(cell[0], cell[1], x_increment, y_increment)
 
     def calculate_pixels_tuple(self, coordinates: Tuple[int, int]
-                               ) -> Tuple[int, int]:
+                                ) -> Tuple[int, int]:
         x_increment = (self.window_width - self.margin) / self.width
         y_increment = (self.maze_height - self.margin) / self.height
         return (self.margin + int(x_increment * (coordinates[0])),
-                self.margin + int(y_increment * (coordinates[1])))
+                self.margin + self.margin_top_height + int(y_increment *
+                                                (coordinates[1])))
 
     def calculate_center(self) -> Tuple[int, int]:
         x = int((self.width - 1) / 2)
         y = int((self.height - 1) / 2)
         return (x, y)
+
+    def calculate_center_pixels(self) -> Tuple[int, int]:
+        center_x = self.window_width // 2
+        center_y = self.window_height // 2
+        return (center_x, center_y)

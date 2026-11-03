@@ -1,5 +1,11 @@
 import pygame
-from mazegenerator import MazeGenerator
+import sys
+try:
+    from mazegenerator import MazeGenerator
+except ImportError:
+    print("Error: the 'mazegenerator' package is not installed. "
+          "Install it first (make install).", file=sys.stderr)
+    sys.exit(1)
 from .EntitiesAdapter import EntitiesAdapter
 from .. import (EntityFactory, Ghost, Player, MovementEntity,
                 MovingDirection)
@@ -31,6 +37,7 @@ class MazeUi:
         self.entity_factory: EntityFactory = EntityFactory()
         self.power_up_timer = 0
         self.POWER_UP_DURATION = 7000
+        self.RESPAWN_DELAY = 5000
         self.level_timer = 0
         self.paused = False
         self.pause_index = 0
@@ -47,12 +54,15 @@ class MazeUi:
         self.ghosts = []
         self.pacgums = []
         self.super_pacgums = []
-
         self.power_up_timer = 0
         self.level_timer = 0
         self.paused = False
         self.pause_index = 0
         self.back_to_menu = False
+        self.life_anim_active = False
+        self.life_anim_time = 0
+        self.life_anim_duration = 1000
+        self.life_anim_image = None
 
     def get_maze_cell(self, x: int, y: int):
         return self.maze.maze[y][x]
@@ -66,43 +76,51 @@ class MazeUi:
 
     def initializeMaze(self, width: int, height: int) -> None:
         seed = self.config.seed if self.current_level == 0 else 0
-        self.maze: MazeGenerator = MazeGenerator((width, height),
-                                                 perfect=False, seed=seed)
-
-    """ def createAllSquaresAndSavingThem(self, x_limit: int) -> None:
-        x = 5
-        y = 5
-        increment = 50
-        margin = 10
-        for i in range(16):
-            self.createMazeBlock(i, x, y, x + increment, y + increment)
-
-            zone = self.screen.subsurface(
-                pygame.Rect(x, y, increment + 1, increment + 1)
-            ).copy()
-            self.saveImage(zone, f"../img/square_{i}.png")
-            x += increment + margin
-            if (x + increment + margin > x_limit):
-                x = 5
-                y += increment + margin """
+        try:
+            self.maze: MazeGenerator = MazeGenerator((width, height),
+                                        perfect=False, seed=seed)
+        except Exception as e:
+            print(f"Error: The maze generator could not create the map of "
+                    f"{width}x{height} ({e}).", file=sys.stderr)
+            pygame.quit()
+            sys.exit(1)
 
     def load_level(self, level_index: int) -> Tuple[int, int]:
         self.current_level = level_index
         width = self.config.levels[self.current_level].width
         height = self.config.levels[self.current_level].height
         self.initializeMaze(width, height)
-        self.player.power_down()
-        self.power_up_timer = 0
-        self.level_timer = 0
         return (width, height)
 
     def next_level(self) -> Tuple[int, int] | None:
         if self.current_level + 1 >= len(self.config.levels):
             self.running = False
             return None
+        self.player.power_down()
+        self.power_up_timer = 0
+        self.level_timer = 0
         return self.load_level(self.current_level + 1)
 
-    def bind_events(self, handle_pause: Callable[int, None]) -> None:
+    def update_if_ghost_is_eaten(self):
+        for ghost in self.ghosts:
+            if not ghost.is_eaten():
+                ghost.scared = True
+
+    def lose_life_and_reset(self) -> None:
+        self.player.lose_life()
+        self.player.power_down()
+        self.power_up_timer = 0
+        if self.player.lives <= 0:
+            self.running = False
+            return
+        for ghost in self.ghosts:
+            ghost.respawn()
+            ghost.respawn_timer = 0
+            ghost.scared = False
+
+    def bind_events(self, handle_pause: Callable[int, None]) -> dict:
+        result: dict = {'extra_life': False,
+                        'level_skip': False}
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
@@ -117,3 +135,13 @@ class MazeUi:
                         event.key]
                 elif event.key == pygame.K_i:
                     self.player.change_invincibility()
+                elif event.key == pygame.K_v:
+                    self.player.add_extra_life()
+                    result.update({'extra_life': True})
+                elif event.key == pygame.K_b:
+                    self.player.change_speed_boost()
+                elif event.key == pygame.K_l:
+                    result.update({'level_skip': True})
+                elif event.key == pygame.K_f:
+                    self.player.change_ghost_freeze()
+        return result

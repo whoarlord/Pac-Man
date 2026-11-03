@@ -31,6 +31,8 @@ class Ghost(MovementEntity):
         self.color = color
         self.spawn_x = x
         self.spawn_y = y
+        self.respawn_timer = 0
+        self.scared = False
 
     def set_image(self, image: Surface) -> None:
         self.image = image
@@ -98,13 +100,23 @@ class Ghost(MovementEntity):
 
         distances = self._get_distances(player_pos)
         neighbors = self._get_neighbors((self.x, self.y))
-        best = neighbors[0]
+        best: tuple[int, int] | None = None
+        best_dist = 0
         for cell in neighbors:
-            # Strict < and > keep the first cell when there is a tie.
-            if chase and distances[cell] < distances[best]:
+            if cell not in distances:
+                continue
+            cell_dist = distances[cell]
+            if best is None:
+                better = True
+            elif chase:
+                better = cell_dist < best_dist
+            else:
+                better = cell_dist > best_dist
+            if better:
                 best = cell
-            elif not chase and distances[cell] > distances[best]:
-                best = cell
+                best_dist = cell_dist
+        if best is None:
+            return (self.x, self.y)
         return best
 
     def _move_to(self, cell: tuple[int, int]) -> None:
@@ -152,3 +164,9 @@ class Ghost(MovementEntity):
 
         cell = self._choose_cell(player_pos, False)
         self._move_to(cell)
+
+    def is_eaten(self) -> bool:
+        return self.respawn_timer > 0
+
+    def is_scared(self) -> bool:
+        return self.scared

@@ -23,6 +23,8 @@ class Player(MovementEntity):
         self.lives = lives
         self.pacman_state: int = 0
         self.invincible: bool = False
+        self.speed_boost = False
+        self.ghost_freeze = False
 
     def add_pacgum_points(self) -> None:
         """Add POINTS_PER_PACGUM to the score.
@@ -71,11 +73,32 @@ class Player(MovementEntity):
         elif not self.try_move_player(self.current_direction):
             self.current_direction = MovingDirection.NOT_MOVING
 
-    def change_invincibility(self):
+    def change_invincibility(self) -> None:
         if (self.invincible):
             self.invincible = False
         else:
             self.invincible = True
 
-    def is_invincible(self):
+    def is_invincible(self) -> bool:
         return self.invincible
+
+    def add_extra_life(self) -> None:
+        self.lives = min(10, self.lives + 1)
+
+    def change_speed_boost(self) -> None:
+        if (self.speed_boost):
+            self.speed_boost = False
+        else:
+            self.speed_boost = True
+
+    def is_speed_boost(self) -> bool:
+        return self.speed_boost
+
+    def change_ghost_freeze(self) -> None:
+        if (self.ghost_freeze):
+            self.ghost_freeze = False
+        else:
+            self.ghost_freeze = True
+
+    def is_ghost_freeze(self) -> bool:
+        return self.ghost_freeze

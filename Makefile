@@ -37,10 +37,10 @@ clean:
 
 lint:
 	flake8 src
-	mypy $(MYPYFLAGS) src
+	$(VIRTUALENV)/bin/mypy $(MYPYFLAGS) src
 
 lint-strict:
 	flake8 src
-	mypy --strict --ignore-missing-imports src
+	$(VIRTUALENV)/bin/mypy --strict --ignore-missing-imports src
 
 SILENT: all install run debug build install clean lint lint-strict

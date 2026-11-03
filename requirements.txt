@@ -1,2 +1,4 @@
 pygame
 pydantic
+mypy
+flake8
