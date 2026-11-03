@@ -15,7 +15,6 @@ class EntitiesAdapter:
         self.pacman_state = 5
         self.calls_counter: int = 0
         self.cache: dict[str, pygame.Surface] = {}
-        self._preload_images()
 
     def _all_image_routes(self) -> list[str]:
         names = [
@@ -30,7 +29,7 @@ class EntitiesAdapter:
         ]
         return [f"{self.img_route}{name}.png" for name in names]
 
-    def _preload_images(self) -> None:
+    def preload_images(self) -> None:
         routes = self._all_image_routes()
         missing = [route for route in routes if not os.path.isfile(route)]
         if missing:
