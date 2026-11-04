@@ -24,10 +24,12 @@ class Ghost(MovementEntity):
                  y_pixel: int, image: Surface,
                  can_move: Callable[
                      [tuple[int, int], tuple[int, int]], bool],
-                 color: GhostColor) -> None:
+                 color: GhostColor,
+                 available_cell: Callable) -> None:
         """Create a ghost at position (x, y)."""
 
         super().__init__(x, y, x_pixel, y_pixel, image, can_move)
+        self.available_cell = available_cell
         self.color = color
         self.spawn_x = x
         self.spawn_y = y
@@ -144,14 +146,37 @@ class Ghost(MovementEntity):
     # catch_player and run_from_player move the ghost, as they do now, or
     # return the direction instead.
 
-    def catch_player(self, player_pos: tuple[int, int]) -> None:
+    def target_for_pink(self, player_pos: tuple[int, int],
+                        player_direction: MovingDirection
+                        ) -> tuple[int, int]:
+        target_cell = None
+        movement: int = 4
+        while (target_cell is None):
+            target_cell = MovementEntity.next_pos_to_target(player_pos,
+                                                            player_direction,
+                                                            movement)
+            if (not self.available_cell(target_cell)):
+                target_cell = None
+            movement -= 1
+            if (movement == 0):
+                return player_pos
+        return target_cell
+
+    def catch_player(self, player_pos: tuple[int, int],
+                     player_direction: MovingDirection) -> None:
         """Move the ghost one cell along the shortest path to the player.
 
         player_pos is the player's position as (x, y). is_walkable says
         whether a cell can be stepped on.
         """
-
-        cell = self._choose_cell(player_pos, True)
+        print(f"catching color: {self.color}")
+        target_cell: tuple[int, int] = player_pos
+        if (self.color == self.GhostColor.RED):
+            target_cell = player_pos
+        elif (self.color == self.GhostColor.PINK):
+            print("pink catching")
+            target_cell = self.target_for_pink(player_pos, player_direction)
+        cell = self._choose_cell(target_cell, True)
         self._move_to(cell)
 
     def run_from_player(self, player_pos: tuple[int, int]) -> None:
