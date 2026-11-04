@@ -19,17 +19,36 @@ class MazeGrid:
         self.margin = margin
         self.thick = thick
         self.lines_color = lines_color
-        self.cell_size: Tuple[int, int] = self.calculate_cell_size()
+
+        ideal_width = int((self.window_width - (self.margin * 2)) /
+                          self.width)
+        ideal_height = int((self.maze_height - (self.margin * 2)) /
+                           self.height)
+        square_size = min(ideal_width, ideal_height)
+        self.cell_size: Tuple[int, int] = (square_size, square_size)
+
+        self.offset_x = (self.window_width - (square_size * self.width)) // 2
+        self.offset_y = (self.margin_top_height +
+                         (self.maze_height - (square_size * self.height)) // 2)
 
     def reset(self, width: int, height: int) -> None:
         self.width = width
         self.height = height
-        self.cell_size = self.calculate_cell_size()
+        ideal_width = int((self.window_width - (self.margin * 2)) / self.width)
+        ideal_height = int((self.maze_height - (self.margin * 2)) /
+                           self.height)
+        square_size = min(ideal_width, ideal_height)
+        self.cell_size = (square_size, square_size)
+
+        self.offset_x = (self.window_width - (square_size * self.width)) // 2
+        self.offset_y = self.margin_top_height + (
+            self.maze_height - (square_size * self.height)) // 2
 
     def calculate_cell_size(self) -> Tuple[int, int]:
-        cell_width = int((self.window_width - self.margin) / self.width)
-        cell_height = int((self.maze_height - self.margin) / self.height)
-        return (cell_width, cell_height)
+        ideal_width = int((self.window_width - self.margin) / self.width)
+        ideal_height = int((self.maze_height - self.margin) / self.height)
+        square_size = min(ideal_width, ideal_height)
+        return (square_size, square_size)
 
     def get_cell_size(self) -> tuple[int, int]:
         return self.cell_size
@@ -50,30 +69,22 @@ class MazeGrid:
         return (self.window_width, self.window_height)
 
     def get_increments(self) -> Tuple[int, int]:
-        x_increment = int(((self.window_width - self.margin)
-                           / self.width))
-        y_increment = int(((self.maze_height - self.margin)
-                           / self.height))
-        return (x_increment, y_increment)
+        return (self.cell_size[0], self.cell_size[1])
 
     def get_increments_with_division(self, division: float = 1.0
                                      ) -> Tuple[int, int]:
-        increments = list(self.get_increments())
+        increments = self.get_increments()
         return (max(1, int(increments[0] / division)),
                 max(1, int(increments[1] / division)))
 
     def calculate_rect_for_cell(self, cell: Tuple[int, int]) -> Rect:
-        x_increment = (self.window_width - self.margin) / self.width
-        y_increment = (self.maze_height - self.margin) / self.height
-        return Rect(cell[0], cell[1], x_increment, y_increment)
+        return Rect(cell[0], cell[1], self.cell_size[0], self.cell_size[1])
 
     def calculate_pixels_tuple(self, coordinates: Tuple[int, int]
                                ) -> Tuple[int, int]:
-        x_increment = (self.window_width - self.margin) / self.width
-        y_increment = (self.maze_height - self.margin) / self.height
-        return (self.margin + int(x_increment * (coordinates[0])),
-                self.margin + self.margin_top_height + int(y_increment *
-                                                           (coordinates[1])))
+        pixel_x = self.offset_x + (coordinates[0] * self.cell_size[0])
+        pixel_y = self.offset_y + (coordinates[1] * self.cell_size[1])
+        return (pixel_x, pixel_y)
 
     def calculate_center(self) -> Tuple[int, int]:
         x = int((self.width - 1) / 2)

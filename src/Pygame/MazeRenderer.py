@@ -26,6 +26,7 @@ class MazeRenderer:
         self.life_anim_image: Surface | None = None
         self.life_anim_duration = 1000
         self.RESPAWN_DELAY = 5000
+        self.time_counter = 0
 
     def initialize_veil(self) -> None:
         self.pause_veil = Surface(self.maze_grid.get_window_size())
@@ -440,6 +441,7 @@ class MazeRenderer:
 
     def initialize_level(self) -> None:
         self.entity_adapter = EntitiesAdapter(self.maze_grid.get_cell_size())
+        self.entity_adapter.preload_images()
         self.game_state.player.set_image(self.entity_adapter.makePlayerImage(
             MovingDirection.NOT_MOVING))
         self.reset_player_position()
@@ -525,18 +527,18 @@ class MazeRenderer:
     def event_loop(self) -> None:
         clock = time.Clock()
         movement_interval = 35
-        time_counter = 0
+        self.time_counter = 0
         self.game_state.running = True
         while self.game_state.running:
             self.draw_map()
-            dt = clock.tick(60)
+            dt = min(clock.tick(60), 100)
             animations = self.game_state.bind_events(self.handle_pause_key)
             self.handle_animations(animations)
             if self.game_state.paused:
                 self.draw_pause_menu()
                 display.flip()
                 continue
-            time_counter += dt
+            self.time_counter += dt
             player = self.game_state.player
             if player.is_powered_up:
                 self.game_state.power_up_timer += dt
@@ -559,7 +561,9 @@ class MazeRenderer:
             self.eat_pacgums()
             if not self.pacgums and not self.super_pacgums:
                 self.load_level()
-            if time_counter >= movement_interval:
+                clock.tick()
+                self.time_counter = 0
+            if self.time_counter >= movement_interval:
                 if player.current_direction == MovingDirection.NOT_MOVING:
                     player.update_direction()
                 if player.current_direction != MovingDirection.NOT_MOVING:
@@ -577,5 +581,5 @@ class MazeRenderer:
                                 ghost.run_from_player(player_pos)
                             else:
                                 ghost.catch_player(player_pos)
-                time_counter -= movement_interval
+                self.time_counter -= movement_interval
             display.flip()
