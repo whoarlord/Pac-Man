@@ -395,8 +395,6 @@ class MazeRenderer:
             ghost.set_current_direction(MovingDirection.NOT_MOVING)
 
     def check_collisions(self) -> None:
-        if (self.game_state.player.is_invincible()):
-            return
         width_c, height_c = self.maze_grid.get_cell_size()
 
         tolerance = min(6, int(min(width_c, height_c) / 4))
@@ -427,7 +425,7 @@ class MazeRenderer:
                         (ghost.x, ghost.y))
                     ghost.set_pixels(px_ghost)
                     ghost.set_current_direction(MovingDirection.NOT_MOVING)
-                else:
+                elif not self.game_state.player.is_invincible():
                     self.lose_life_and_reset()
                     lives = self.game_state.player.lives
                     print(f"¡You have been touched! Remaining lives: {lives}")
