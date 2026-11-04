@@ -26,6 +26,8 @@ class MazeRenderer:
         self.life_anim_image: Surface | None = None
         self.life_anim_duration = 1000
         self.RESPAWN_DELAY = 5000
+        self.POWER_UP_WARNING = 2000
+        self.BLINK_INTERVAL = 200
         self.time_counter = 0
 
     def initialize_veil(self) -> None:
@@ -200,6 +202,12 @@ class MazeRenderer:
 
     def make_ghost_by_color(self, ghost: Ghost) -> None:
         scared: bool = ghost.is_scared()
+        remaining = (self.game_state.POWER_UP_DURATION
+                     - self.game_state.power_up_timer)
+        if (scared and remaining <= self.POWER_UP_WARNING
+                and (self.game_state.power_up_timer
+                     // self.BLINK_INTERVAL) % 2 == 1):
+            scared = False
         if ghost.color == Ghost.GhostColor.RED:
             img = self.entity_adapter.makeRedGhostImage(scared)
             ghost.set_image(img)
