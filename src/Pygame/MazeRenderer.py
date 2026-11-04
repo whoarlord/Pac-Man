@@ -337,7 +337,11 @@ class MazeRenderer:
                 cell = (x, y)
                 if is_walkable(cell) and cell not in occupied:
                     free_cells += 1
-        amount = min(self.game_state.config.pacgum, free_cells)
+        pacgum_ratio = self.game_state.config.PACGUM_RATIO
+        if self.game_state.config.pacgum is None:
+            amount = int(free_cells * pacgum_ratio)
+        else:
+            amount = min(self.game_state.config.pacgum, free_cells)
         positions = Pacgum.get_random_positions(width, height,
                                                 amount, is_walkable, occupied)
 
