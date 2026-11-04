@@ -532,6 +532,13 @@ class MazeRenderer:
         if (animations.get('level_skip')):
             self.trigger_level_skip_effect()
 
+    def get_blocked_cells(self, ghost: Ghost) -> set[tuple[int, int]]:
+        blocked: set[tuple[int, int]] = set()
+        for other in self.game_state.ghosts:
+            if other is not ghost:
+                blocked.update(other.get_occupied_cells())
+        return blocked
+
     def event_loop(self) -> None:
         clock = time.Clock()
         movement_interval = 35
@@ -585,9 +592,10 @@ class MazeRenderer:
                                 MovingDirection.NOT_MOVING):
                             self.calculate_next_movement(ghost)
                         else:
+                            blocked = self.get_blocked_cells(ghost)
                             if ghost.is_scared():
-                                ghost.run_from_player(player_pos)
+                                ghost.run_from_player(player_pos, blocked)
                             else:
-                                ghost.catch_player(player_pos)
+                                ghost.catch_player(player_pos, blocked)
                 self.time_counter -= movement_interval
             display.flip()
