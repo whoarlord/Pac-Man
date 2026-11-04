@@ -123,6 +123,7 @@ class MazeRenderer:
         for ghost in self.game_state.ghosts:
             if ghost.is_eaten():
                 continue
+            self.make_ghost_by_color(ghost)
             self.place_entity(ghost)
         self.draw_hud()
         self.check_collisions()
@@ -217,8 +218,6 @@ class MazeRenderer:
             division = 2.5 if entity.is_speed_boost() else 5.0
             img = self.entity_adapter.makePlayerImage(entity.current_direction)
             entity.set_image(img)
-        elif isinstance(entity, Ghost):
-            self.make_ghost_by_color(entity)
         x_increment, y_increment = self.maze_grid.get_increments_with_division(
             division)
         target_pixels = self.maze_grid.calculate_pixels_tuple(
