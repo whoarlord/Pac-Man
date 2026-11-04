@@ -59,7 +59,8 @@ class MazeGrid:
     def get_increments_with_division(self, division: float = 1.0
                                      ) -> Tuple[int, int]:
         increments = list(self.get_increments())
-        return (int(increments[0] / division), int(increments[1] / division))
+        return (max(1, int(increments[0] / division)),
+                max(1, int(increments[1] / division)))
 
     def calculate_rect_for_cell(self, cell: Tuple[int, int]) -> Rect:
         x_increment = (self.window_width - self.margin) / self.width

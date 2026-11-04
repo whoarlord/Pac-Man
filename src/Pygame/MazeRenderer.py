@@ -218,6 +218,8 @@ class MazeRenderer:
             division = 2.5 if entity.is_speed_boost() else 5.0
             img = self.entity_adapter.makePlayerImage(entity.current_direction)
             entity.set_image(img)
+        elif isinstance(entity, Ghost) and entity.is_scared():
+            division = 15.0
         x_increment, y_increment = self.maze_grid.get_increments_with_division(
             division)
         target_pixels = self.maze_grid.calculate_pixels_tuple(
