@@ -40,7 +40,7 @@ class GameConfigModel(BaseModel):
 
     # Minimum number of levels the game must have.
     MIN_LEVELS: ClassVar[int] = 10
-    PACGUM_RATIO: ClassVar[float] = 0.5
+    PACGUM_RATIO: ClassVar[float] = 0.9
 
     highscore_filename: str = "highscores.json"
     # Un objeto LevelConfig nuevo por cada nivel por defecto.
