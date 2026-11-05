@@ -578,9 +578,9 @@ class MazeRenderer:
             self.game_state.level_timer += dt
             if (self.game_state.level_timer >=
                     self.game_state.config.level_max_time * 1000):
-                print("Time is up")
-                self.lose_life_and_reset()
-                print(f"Remaining lives: {player.lives}")
+                print("Time is up! Game Over.")
+                player.lives = 0
+                self.game_state.running = False
                 self.game_state.level_timer = 0
             if not self.pacgums and not self.super_pacgums:
                 self.load_level()
