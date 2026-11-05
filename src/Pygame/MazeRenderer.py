@@ -575,7 +575,6 @@ class MazeRenderer:
                 self.lose_life_and_reset()
                 print(f"Remaining lives: {player.lives}")
                 self.game_state.level_timer = 0
-            self.eat_pacgums()
             if not self.pacgums and not self.super_pacgums:
                 self.load_level()
                 clock.tick()
@@ -585,6 +584,8 @@ class MazeRenderer:
                     player.update_direction()
                 if player.current_direction != MovingDirection.NOT_MOVING:
                     self.calculate_next_movement(player)
+                    if player.current_direction == MovingDirection.NOT_MOVING:
+                        self.eat_pacgums()
                 player_pos = (player.x, player.y)
                 if not player.is_ghost_freeze():
                     for ghost in self.game_state.ghosts:
