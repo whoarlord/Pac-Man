@@ -138,3 +138,18 @@ class MovementEntity():
         """
 
         return (self.x - 1, self.y)
+
+    @staticmethod
+    def next_pos_to_target(player_pos: tuple[int, int],
+                           direction: MovingDirection,
+                           number_of_movements: int) -> tuple[int, int]:
+        if (direction == MovingDirection.MOVING_DOWN):
+            return (player_pos[0], player_pos[1] + 1 * number_of_movements)
+        elif (direction == MovingDirection.MOVING_UP):
+            return (player_pos[0], player_pos[1] - 1 * number_of_movements)
+        elif (direction == MovingDirection.MOVING_RIGHT):
+            return (player_pos[0] + 1 * number_of_movements, player_pos[1])
+        elif (direction == MovingDirection.MOVING_LEFT):
+            return (player_pos[0] - 1 * number_of_movements, player_pos[1])
+        else:
+            return (player_pos)

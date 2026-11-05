@@ -14,6 +14,8 @@ class MazeRenderer:
         self.maze_grid = maze_grid
         self.game_state = game_state
         self.entity_adapter = entity_adapter
+        self.game_state.entity_factory.set_can_move(self.can_move)
+        self.game_state.entity_factory.set_available_cell(self.available_cell)
         self.screen: Surface = display.set_mode(
             self.maze_grid.get_window_size())
         self.screen.fill("black")
@@ -263,7 +265,7 @@ class MazeRenderer:
             coordinates)
         self.place_element(player, pixels)
         self.game_state.player = (self.game_state.entity_factory.create_player(
-            coordinates, pixels, player, self.can_move,
+            coordinates, pixels, player,
             self.game_state.config.points_per_pacgum,
             self.game_state.config.points_per_super_pacgum,
             self.game_state.config.points_per_ghost,
@@ -277,11 +279,11 @@ class MazeRenderer:
         pixels: Tuple[int, int] = self.maze_grid.calculate_pixels_tuple(
             coordinates)
         self.place_element(red_ghost, pixels)
-        ghosts.append(
-            entity_factory.create_ghost(coordinates, pixels, red_ghost,
-                                        self.can_move,
-                                        Ghost.GhostColor.RED)
-        )
+        red_ghost_entity = entity_factory.create_ghost(
+            coordinates, pixels, red_ghost,
+            Ghost.GhostColor.RED)
+        self.game_state.set_red_ghost(red_ghost_entity)
+        ghosts.append(red_ghost_entity)
 
         yellow_ghost = self.entity_adapter.makeYellowGhostImage()
         coordinates = (0, self.maze_grid.height - 1)
@@ -289,7 +291,6 @@ class MazeRenderer:
         self.place_element(yellow_ghost, pixels)
         ghosts.append(
             entity_factory.create_ghost(coordinates, pixels, yellow_ghost,
-                                        self.can_move,
                                         Ghost.GhostColor.YELLOW)
         )
 
@@ -299,7 +300,6 @@ class MazeRenderer:
         self.place_element(blue_ghost, pixels)
         ghosts.append(
             entity_factory.create_ghost(coordinates, pixels, blue_ghost,
-                                        self.can_move,
                                         Ghost.GhostColor.BLUE)
         )
 
@@ -309,7 +309,7 @@ class MazeRenderer:
         self.place_element(pink_ghost, pixels)
         ghosts.append(
             entity_factory.create_ghost(coordinates, pixels,
-                                        pink_ghost, self.can_move,
+                                        pink_ghost,
                                         Ghost.GhostColor.PINK)
         )
         self.game_state.ghosts = ghosts
@@ -522,6 +522,13 @@ class MazeRenderer:
             return False
         return bool((actual_cell & wall) == 0)
 
+    def available_cell(self, target: tuple[int, int]) -> bool:
+        x_target, y_target = target
+        if (x_target < 0 or x_target >= self.maze_grid.width or y_target < 0
+                or y_target >= self.maze_grid.height):
+            return False
+        return True
+
     def extra_life_animation(self) -> None:
         self.life_anim_active = True
         self.life_anim_time = 0
@@ -588,6 +595,7 @@ class MazeRenderer:
                         self.eat_pacgums()
                 player_pos = (player.x, player.y)
                 if not player.is_ghost_freeze():
+                    red_ghost_pos = self.game_state.get_red_ghost_pos()
                     for ghost in self.game_state.ghosts:
                         if ghost.is_eaten():
                             continue
@@ -597,8 +605,11 @@ class MazeRenderer:
                         else:
                             blocked = self.get_blocked_cells(ghost)
                             if ghost.is_scared():
-                                ghost.run_from_player(player_pos, blocked)
+                                ghost.run_to_home(blocked)
                             else:
-                                ghost.catch_player(player_pos, blocked)
+                                ghost.catch_player(player_pos,
+                                                   player.current_direction,
+                                                   blocked,
+                                                   red_ghost_pos)
                 self.time_counter -= movement_interval
             display.flip()

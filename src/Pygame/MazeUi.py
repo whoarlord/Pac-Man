@@ -33,6 +33,7 @@ class MazeUi:
         self.pacgums: list[Pacgum] = []
         self.super_pacgums: list[Pacgum] = []
         self.entity_factory: EntityFactory = EntityFactory()
+        self.red_ghost: Ghost | None = None
         self.power_up_timer = 0
         self.POWER_UP_DURATION = 7000
         self.RESPAWN_DELAY = 5000
@@ -52,6 +53,7 @@ class MazeUi:
         self.ghosts = []
         self.pacgums = []
         self.super_pacgums = []
+        self.red_ghost = None
         self.power_up_timer = 0
         self.level_timer = 0
         self.paused = False
@@ -144,3 +146,10 @@ class MazeUi:
                 elif event.key == pygame.K_f:
                     self.player.change_ghost_freeze()
         return result
+
+    def set_red_ghost(self, red_ghost: Ghost):
+        if (red_ghost.color == Ghost.GhostColor.RED):
+            self.red_ghost = red_ghost
+
+    def get_red_ghost_pos(self) -> tuple[int, int]:
+        return self.red_ghost.get_coordinates()
