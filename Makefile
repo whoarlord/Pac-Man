@@ -30,23 +30,23 @@ install: $(VIRTUALENV)
 install-module: $(VIRTUALENV)
 	$(PIP) install --force-reinstall ./src/$(MAZEPROGRAM)
 
-run: install
+run:
 	$(PYTHON) $(MAIN) $(CONFIG)
 
-debug: install
+debug:
 	$(PYTHON) $(DEBUGGER) $(MAIN) $(CONFIG) </dev/tty
 
 $(VIRTUALENV):
 	python3 -m venv $(VIRTUALENV)
 
 clean:
-	py3clean .
+	find . -name __pycache__ -type d -prune -exec rm -rf {} +
 	rm -rf $(TOCLEAN)
 
-lint: install
+lint:
 	$(FLAKE8) .
 	$(MYPY) . $(MYPYFLAGS)
 
-lint-strict: install
+lint-strict:
 	$(FLAKE8) .
 	$(MYPY) . --strict --ignore-missing-imports
