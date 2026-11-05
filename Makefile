@@ -11,7 +11,7 @@ MYPY=$(VIRTUALENV)/bin/mypy
 DEPENDENCIES=requirements.txt
 MAZEPROGRAM=mazegenerator-2.1.0-py3-none-any.whl
 
-MAIN= -m src
+MAIN= pac-man.py
 
 TOCLEAN=.mypy_cache
 

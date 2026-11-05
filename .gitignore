@@ -15,3 +15,12 @@ __pycache__/
 *.egg-info/
 .mypy_cache/
 .pytest_cache/
+
+# Packaging output
+build/
+dist/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
