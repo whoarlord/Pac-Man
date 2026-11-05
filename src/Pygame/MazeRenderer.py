@@ -270,10 +270,11 @@ class MazeRenderer:
         pixels: Tuple[int, int] = self.maze_grid.calculate_pixels_tuple(
             coordinates)
         self.place_element(red_ghost, pixels)
-        ghosts.append(
-            entity_factory.create_ghost(coordinates, pixels, red_ghost,
-                                        Ghost.GhostColor.RED)
-        )
+        red_ghost_entity = entity_factory.create_ghost(
+            coordinates, pixels, red_ghost,
+            Ghost.GhostColor.RED)
+        self.game_state.set_red_ghost(red_ghost_entity)
+        ghosts.append(red_ghost_entity)
 
         yellow_ghost = self.entity_adapter.makeYellowGhostImage()
         coordinates = (0, self.maze_grid.height - 1)
@@ -572,6 +573,7 @@ class MazeRenderer:
                     self.calculate_next_movement(player)
                 player_pos = (player.x, player.y)
                 if not player.is_ghost_freeze():
+                    red_ghost_pos = self.game_state.get_red_ghost_pos()
                     for ghost in self.game_state.ghosts:
                         if ghost.is_eaten():
                             continue
@@ -580,9 +582,10 @@ class MazeRenderer:
                             self.calculate_next_movement(ghost)
                         else:
                             if ghost.is_scared():
-                                ghost.run_from_player(player_pos)
+                                ghost.run_to_home()
                             else:
                                 ghost.catch_player(player_pos,
-                                                   player.current_direction)
+                                                   player.current_direction,
+                                                   red_ghost_pos)
                 time_counter -= movement_interval
             display.flip()

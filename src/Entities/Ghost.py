@@ -3,6 +3,7 @@ from typing import Callable
 from collections import deque
 from enum import Enum
 from pygame import Surface
+import math
 
 
 class Ghost(MovementEntity):
@@ -35,6 +36,11 @@ class Ghost(MovementEntity):
         self.spawn_y = y
         self.respawn_timer = 0
         self.scared = False
+        self.home_x = x
+        self.home_y = y
+
+    def get_home_coordinates(self) -> tuple[int, int]:
+        return (self.home_x, self.home_y)
 
     def set_image(self, image: Surface) -> None:
         self.image = image
@@ -85,6 +91,22 @@ class Ghost(MovementEntity):
                     distances[neighbor] = distances[current] + 1
                     queue.append(neighbor)
         return distances
+
+    def _get_distance_to_actual_cell(self, start: tuple[int, int],
+                                     player_pos: tuple[int, int]) -> int:
+        distances = {start: 0}
+        # queue holds the cells whose neighbours are still to be checked.
+        queue = deque([start])
+        while queue:
+            current = queue.popleft()
+            for neighbor in self._get_neighbors(current):
+                if neighbor == player_pos:
+                    return distances[current] + 1
+                if neighbor not in distances:
+                    # Only a cell seen for the first time gets a distance.
+                    distances[neighbor] = distances[current] + 1
+                    queue.append(neighbor)
+        return distances[current] + 1
 
     def _choose_cell(self, player_pos: tuple[int, int], chase: bool
                      ) -> tuple[int, int]:
@@ -162,32 +184,60 @@ class Ghost(MovementEntity):
                 return player_pos
         return target_cell
 
+    def target_for_blue(self, player_pos: tuple[int, int],
+                        red_position: tuple[int, int],
+                        player_direction: MovingDirection
+                        ) -> tuple[int, int]:
+        target_cell = None
+        intermediate_target_cell = MovementEntity.next_pos_to_target(
+            player_pos,
+            player_direction,
+            2)
+        target_cell = self.extend_line(intermediate_target_cell,
+                                       red_position)
+        if (not self.available_cell(target_cell)):
+            target_cell = player_pos
+        return target_cell
+
+    def target_for_yellow(self, player_pos: tuple[int, int]):
+        distance = self._get_distance_to_actual_cell(self.get_coordinates(),
+                                                     player_pos)
+        print(f"distance from player {distance}")
+        if (distance <= 8):
+            return False
+        return True
+
+    @staticmethod
+    def extend_line(a, b):
+        dx, dy = a[0] - b[0], a[1] - b[1]
+        return (a[0] + dx, a[1] + dy)
+
     def catch_player(self, player_pos: tuple[int, int],
-                     player_direction: MovingDirection) -> None:
+                     player_direction: MovingDirection,
+                     red_position: tuple[int, int] | None = None
+                     ) -> None:
         """Move the ghost one cell along the shortest path to the player.
 
         player_pos is the player's position as (x, y). is_walkable says
         whether a cell can be stepped on.
         """
-        print(f"catching color: {self.color}")
         target_cell: tuple[int, int] = player_pos
         if (self.color == self.GhostColor.RED):
             target_cell = player_pos
         elif (self.color == self.GhostColor.PINK):
-            print("pink catching")
             target_cell = self.target_for_pink(player_pos, player_direction)
-        cell = self._choose_cell(target_cell, True)
-        self._move_to(cell)
+        elif (self.color == self.GhostColor.BLUE):
+            target_cell = self.target_for_blue(player_pos, red_position,
+                                               player_direction)
+        elif (self.color == self.GhostColor.YELLOW):
+            if (not self.target_for_yellow(player_pos)):
+                self.run_to_home()
+                return
+        target_cell = self._choose_cell(target_cell, True)
+        self._move_to(target_cell)
 
-    def run_from_player(self, player_pos: tuple[int, int]) -> None:
-        """Move the ghost one cell away from the player.
-
-        It goes to the neighbouring cell with the longest path to
-        player_pos, given as (x, y). is_walkable says whether a cell can
-        be stepped on.
-        """
-
-        cell = self._choose_cell(player_pos, False)
+    def run_to_home(self) -> None:
+        cell = self._choose_cell(self.get_home_coordinates(), False)
         self._move_to(cell)
 
     def is_eaten(self) -> bool:
