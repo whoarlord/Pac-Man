@@ -1,3 +1,17 @@
+# Game data generated at runtime / local test configs
 configs
 highscores.json
 malformed_highscore.txt
+*.tmp
+ 
+# Virtual environment
+PacEnv/
+.venv/
+venv/
+ 
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.mypy_cache/
+.pytest_cache/

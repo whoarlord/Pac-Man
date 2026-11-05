@@ -1,4 +1,4 @@
 pygame
-pydantic
+pydantic>=2
 mypy
 flake8
