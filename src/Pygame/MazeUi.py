@@ -147,7 +147,7 @@ class MazeUi:
                     self.player.change_ghost_freeze()
         return result
 
-    def set_red_ghost(self, red_ghost: Ghost):
+    def set_red_ghost(self, red_ghost: Ghost) -> None:
         if (red_ghost.color == Ghost.GhostColor.RED):
             self.red_ghost = red_ghost
 

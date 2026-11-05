@@ -49,5 +49,6 @@ class EntityFactory:
                      ) -> None:
         self.can_move = can_move
 
-    def set_available_cell(self, available_cell) -> None:
+    def set_available_cell(self, available_cell: Callable[
+            [tuple[int, int]], bool]) -> None:
         self.available_cell = available_cell

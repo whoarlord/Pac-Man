@@ -3,7 +3,6 @@ from typing import Callable
 from collections import deque
 from enum import Enum
 from pygame import Surface
-import math
 
 
 class Ghost(MovementEntity):
@@ -28,7 +27,7 @@ class Ghost(MovementEntity):
                  can_move: Callable[
                      [tuple[int, int], tuple[int, int]], bool],
                  color: GhostColor,
-                 available_cell: Callable) -> None:
+                 available_cell: Callable[[tuple[int, int]], bool]) -> None:
         """Create a ghost at position (x, y)."""
 
         super().__init__(x, y, x_pixel, y_pixel, image, can_move)
@@ -225,7 +224,7 @@ class Ghost(MovementEntity):
             target_cell = player_pos
         return target_cell
 
-    def target_for_yellow(self, player_pos: tuple[int, int]):
+    def target_for_yellow(self, player_pos: tuple[int, int]) -> bool:
         distance = self._get_distance_to_actual_cell(self.get_coordinates(),
                                                      player_pos)
         print(f"distance from player {distance}")
@@ -234,7 +233,7 @@ class Ghost(MovementEntity):
         return True
 
     @staticmethod
-    def extend_line(a, b):
+    def extend_line(a: tuple[int, int], b: tuple[int, int]) -> tuple[int, int]:
         dx, dy = a[0] - b[0], a[1] - b[1]
         return (a[0] + dx, a[1] + dy)
 
@@ -254,8 +253,11 @@ class Ghost(MovementEntity):
         elif (self.color == self.GhostColor.PINK):
             target_cell = self.target_for_pink(player_pos, player_direction)
         elif (self.color == self.GhostColor.BLUE):
-            target_cell = self.target_for_blue(player_pos, red_position,
-                                               player_direction)
+            if red_position is not None:
+                target_cell = self.target_for_blue(player_pos, red_position,
+                                                   player_direction)
+            else:
+                target_cell = player_pos
         elif (self.color == self.GhostColor.YELLOW):
             if (not self.target_for_yellow(player_pos)):
                 self.run_to_home(blocked)
