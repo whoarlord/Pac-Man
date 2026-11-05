@@ -21,6 +21,8 @@ class Ghost(MovementEntity):
         BLUE = 'blue'
         PINK = 'pink'
 
+    MAX_WAIT_TICKS = 12
+
     def __init__(self, x: int, y: int, x_pixel: int,
                  y_pixel: int, image: Surface,
                  can_move: Callable[
@@ -38,6 +40,7 @@ class Ghost(MovementEntity):
         self.scared = False
         self.home_x = x
         self.home_y = y
+        self.wait_ticks = 0
 
     def get_home_coordinates(self) -> tuple[int, int]:
         return (self.home_x, self.home_y)
@@ -48,6 +51,18 @@ class Ghost(MovementEntity):
     def respawn(self) -> None:
         self.x = self.spawn_x
         self.y = self.spawn_y
+
+    def get_occupied_cells(self) -> set[tuple[int, int]]:
+        cells = {(self.x, self.y)}
+        if self.current_direction == MovingDirection.MOVING_UP:
+            cells.add((self.x, self.y + 1))
+        elif self.current_direction == MovingDirection.MOVING_DOWN:
+            cells.add((self.x, self.y - 1))
+        elif self.current_direction == MovingDirection.MOVING_LEFT:
+            cells.add((self.x + 1, self.y))
+        elif self.current_direction == MovingDirection.MOVING_RIGHT:
+            cells.add((self.x - 1, self.y))
+        return cells
 
     def _get_neighbors(self, cell: tuple[int, int]) -> list[tuple[int, int]]:
         """Return the walkable cells next to cell.
@@ -108,25 +123,12 @@ class Ghost(MovementEntity):
                     queue.append(neighbor)
         return distances[current] + 1
 
-    def _choose_cell(self, player_pos: tuple[int, int], chase: bool
-                     ) -> tuple[int, int]:
-        """Return the neighbouring cell the ghost should move to.
-
-        It computes the distance from player_pos to every cell and looks
-        at the ghost's walkable neighbours. If chase is True it picks the
-        one with the smallest distance, otherwise the one with the
-        largest. On a tie, the first one in the order up, down, left,
-        right wins. It does not move the ghost.
-
-        It assumes the ghost has at least one walkable neighbour and that
-        all of them can be reached from player_pos.
-        """
-
-        distances = self._get_distances(player_pos)
-        neighbors = self._get_neighbors((self.x, self.y))
+    def _best_neighbor(self, distances: dict[tuple[int, int], int],
+                       candidates: list[tuple[int, int]], chase: bool
+                       ) -> tuple[int, int] | None:
         best: tuple[int, int] | None = None
         best_dist = 0
-        for cell in neighbors:
+        for cell in candidates:
             if cell not in distances:
                 continue
             cell_dist = distances[cell]
@@ -139,9 +141,33 @@ class Ghost(MovementEntity):
             if better:
                 best = cell
                 best_dist = cell_dist
+        return best
+
+    def _choose_cell(self, player_pos: tuple[int, int], chase: bool,
+                     blocked: set[tuple[int, int]] | None
+                     ) -> tuple[int, int]:
+        if blocked is None:
+            blocked = set()
+        distances = self._get_distances(player_pos)
+        neighbors = self._get_neighbors((self.x, self.y))
+        best = self._best_neighbor(distances, neighbors, chase)
         if best is None:
             return (self.x, self.y)
-        return best
+        if best not in blocked:
+            self.wait_ticks = 0
+            return best
+        self.wait_ticks += 1
+        if self.wait_ticks <= self.MAX_WAIT_TICKS:
+            return (self.x, self.y)
+        self.wait_ticks = 0
+        free = []
+        for cell in neighbors:
+            if cell not in blocked:
+                free.append(cell)
+        alternative = self._best_neighbor(distances, free, chase)
+        if alternative is None:
+            return (self.x, self.y)
+        return alternative
 
     def _move_to(self, cell: tuple[int, int]) -> None:
         """Move the ghost to cell, which must be one of its 4 neighbours.
@@ -214,6 +240,7 @@ class Ghost(MovementEntity):
 
     def catch_player(self, player_pos: tuple[int, int],
                      player_direction: MovingDirection,
+                     blocked: set[tuple[int, int]] | None = None,
                      red_position: tuple[int, int] | None = None
                      ) -> None:
         """Move the ghost one cell along the shortest path to the player.
@@ -231,13 +258,13 @@ class Ghost(MovementEntity):
                                                player_direction)
         elif (self.color == self.GhostColor.YELLOW):
             if (not self.target_for_yellow(player_pos)):
-                self.run_to_home()
+                self.run_to_home(blocked)
                 return
-        target_cell = self._choose_cell(target_cell, True)
+        target_cell = self._choose_cell(target_cell, True, blocked)
         self._move_to(target_cell)
 
-    def run_to_home(self) -> None:
-        cell = self._choose_cell(self.get_home_coordinates(), False)
+    def run_to_home(self, blocked: set[tuple[int, int]] | None = None) -> None:
+        cell = self._choose_cell(self.get_home_coordinates(), False, blocked)
         self._move_to(cell)
 
     def is_eaten(self) -> bool:

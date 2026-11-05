@@ -28,6 +28,9 @@ class MazeRenderer:
         self.life_anim_image: Surface | None = None
         self.life_anim_duration = 1000
         self.RESPAWN_DELAY = 5000
+        self.POWER_UP_WARNING = 2000
+        self.BLINK_INTERVAL = 200
+        self.time_counter = 0
 
     def initialize_veil(self) -> None:
         self.pause_veil = Surface(self.maze_grid.get_window_size())
@@ -201,6 +204,12 @@ class MazeRenderer:
 
     def make_ghost_by_color(self, ghost: Ghost) -> None:
         scared: bool = ghost.is_scared()
+        remaining = (self.game_state.POWER_UP_DURATION
+                     - self.game_state.power_up_timer)
+        if (scared and remaining <= self.POWER_UP_WARNING
+                and (self.game_state.power_up_timer
+                     // self.BLINK_INTERVAL) % 2 == 1):
+            scared = False
         if ghost.color == Ghost.GhostColor.RED:
             img = self.entity_adapter.makeRedGhostImage(scared)
             ghost.set_image(img)
@@ -328,7 +337,11 @@ class MazeRenderer:
                 cell = (x, y)
                 if is_walkable(cell) and cell not in occupied:
                     free_cells += 1
-        amount = min(self.game_state.config.pacgum, free_cells)
+        pacgum_ratio = self.game_state.config.PACGUM_RATIO
+        if self.game_state.config.pacgum is None:
+            amount = int(free_cells * pacgum_ratio)
+        else:
+            amount = min(self.game_state.config.pacgum, free_cells)
         positions = Pacgum.get_random_positions(width, height,
                                                 amount, is_walkable, occupied)
 
@@ -386,8 +399,6 @@ class MazeRenderer:
             ghost.set_current_direction(MovingDirection.NOT_MOVING)
 
     def check_collisions(self) -> None:
-        if (self.game_state.player.is_invincible()):
-            return
         width_c, height_c = self.maze_grid.get_cell_size()
 
         tolerance = min(6, int(min(width_c, height_c) / 4))
@@ -418,7 +429,7 @@ class MazeRenderer:
                         (ghost.x, ghost.y))
                     ghost.set_pixels(px_ghost)
                     ghost.set_current_direction(MovingDirection.NOT_MOVING)
-                else:
+                elif not self.game_state.player.is_invincible():
                     self.lose_life_and_reset()
                     lives = self.game_state.player.lives
                     print(f"¡You have been touched! Remaining lives: {lives}")
@@ -440,6 +451,7 @@ class MazeRenderer:
 
     def initialize_level(self) -> None:
         self.entity_adapter = EntitiesAdapter(self.maze_grid.get_cell_size())
+        self.entity_adapter.preload_images()
         self.game_state.player.set_image(self.entity_adapter.makePlayerImage(
             MovingDirection.NOT_MOVING))
         self.reset_player_position()
@@ -529,21 +541,28 @@ class MazeRenderer:
         if (animations.get('level_skip')):
             self.trigger_level_skip_effect()
 
+    def get_blocked_cells(self, ghost: Ghost) -> set[tuple[int, int]]:
+        blocked: set[tuple[int, int]] = set()
+        for other in self.game_state.ghosts:
+            if other is not ghost:
+                blocked.update(other.get_occupied_cells())
+        return blocked
+
     def event_loop(self) -> None:
         clock = time.Clock()
         movement_interval = 35
-        time_counter = 0
+        self.time_counter = 0
         self.game_state.running = True
         while self.game_state.running:
             self.draw_map()
-            dt = clock.tick(60)
+            dt = min(clock.tick(60), 100)
             animations = self.game_state.bind_events(self.handle_pause_key)
             self.handle_animations(animations)
             if self.game_state.paused:
                 self.draw_pause_menu()
                 display.flip()
                 continue
-            time_counter += dt
+            self.time_counter += dt
             player = self.game_state.player
             if player.is_powered_up:
                 self.game_state.power_up_timer += dt
@@ -563,14 +582,17 @@ class MazeRenderer:
                 self.lose_life_and_reset()
                 print(f"Remaining lives: {player.lives}")
                 self.game_state.level_timer = 0
-            self.eat_pacgums()
             if not self.pacgums and not self.super_pacgums:
                 self.load_level()
-            if time_counter >= movement_interval:
+                clock.tick()
+                self.time_counter = 0
+            if self.time_counter >= movement_interval:
                 if player.current_direction == MovingDirection.NOT_MOVING:
                     player.update_direction()
                 if player.current_direction != MovingDirection.NOT_MOVING:
                     self.calculate_next_movement(player)
+                    if player.current_direction == MovingDirection.NOT_MOVING:
+                        self.eat_pacgums()
                 player_pos = (player.x, player.y)
                 if not player.is_ghost_freeze():
                     red_ghost_pos = self.game_state.get_red_ghost_pos()
@@ -581,11 +603,13 @@ class MazeRenderer:
                                 MovingDirection.NOT_MOVING):
                             self.calculate_next_movement(ghost)
                         else:
+                            blocked = self.get_blocked_cells(ghost)
                             if ghost.is_scared():
-                                ghost.run_to_home()
+                                ghost.run_to_home(blocked)
                             else:
                                 ghost.catch_player(player_pos,
                                                    player.current_direction,
+                                                   blocked,
                                                    red_ghost_pos)
-                time_counter -= movement_interval
+                self.time_counter -= movement_interval
             display.flip()

@@ -12,7 +12,7 @@ from src.Pygame.EndScreens import GameOverScreen, VictoryScreen
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print("Usage: python3 -m src <config.json>", file=sys.stderr)
+        print("Usage: python3 pac-man.py <config.json>", file=sys.stderr)
         sys.exit(1)
 
     config_path = sys.argv[1]

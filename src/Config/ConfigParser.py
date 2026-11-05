@@ -40,6 +40,7 @@ class GameConfigModel(BaseModel):
 
     # Minimum number of levels the game must have.
     MIN_LEVELS: ClassVar[int] = 10
+    PACGUM_RATIO: ClassVar[float] = 0.9
 
     highscore_filename: str = "highscores.json"
     # Un objeto LevelConfig nuevo por cada nivel por defecto.
@@ -50,7 +51,7 @@ class GameConfigModel(BaseModel):
         default_factory=lambda: [
             LevelConfig() for _ in range(GameConfigModel.MIN_LEVELS)])
     lives: int = Field(default=3, gt=0, le=10)
-    pacgum: int = Field(default=42, gt=0)
+    pacgum: int | None = Field(default=None, gt=0)
     points_per_pacgum: int = Field(default=10, gt=0)
     points_per_super_pacgum: int = Field(default=50, gt=0)
     points_per_ghost: int = Field(default=200, gt=0)
