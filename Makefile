@@ -20,19 +20,21 @@ TOCLEAN=.mypy_cache
 
 MYPYFLAGS=--warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
 
-.PHONY: all install install-module run debug clean lint lint-strict
+.DEFAULT_GOAL := all
 
-.SILENT: all install install-module run debug clean lint lint-strict
+.PHONY: all install install-module run debug clean lint lint-strict package
 
-package: $(VIRTUALENV)
+.SILENT: all install install-module run debug clean lint lint-strict package
+
+all: run
+
+package: install
 	$(PIP) install pyinstaller
 	$(PYINSTALLER) --noconfirm --clean --name pac-man \
 		--add-data "src/img:src/img" pac-man.py
 	cp config.json $(PACKAGE_DIR)/
 	cp packaging/launch.sh packaging/README.txt $(PACKAGE_DIR)/
 	cd dist && zip -r pac-man-linux.zip pac-man
-
-all: run
 
 install: $(VIRTUALENV)
 	$(PIP) install -r $(DEPENDENCIES)
