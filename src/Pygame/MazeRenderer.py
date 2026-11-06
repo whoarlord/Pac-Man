@@ -1,4 +1,4 @@
-from src.Pygame import MazeGrid, MazeUi, EntitiesAdapter
+from src.Pygame import MazeGrid, MazeUi, EntitiesAdapter, MLXAdapter
 from pygame import (Surface, draw, display, font, time,
                     Rect, transform,
                     K_UP, K_w, K_DOWN, K_s, K_ESCAPE,
@@ -31,6 +31,7 @@ class MazeRenderer:
         self.POWER_UP_WARNING = 2000
         self.BLINK_INTERVAL = 200
         self.time_counter = 0
+        self.mlxadapter = MLXAdapter()
 
     def initialize_veil(self) -> None:
         self.pause_veil = Surface(self.maze_grid.get_window_size())
@@ -357,13 +358,15 @@ class MazeRenderer:
                 (pacgum.x, pacgum.y))
             rect = self.maze_grid.calculate_rect_for_cell(pixels)
             radius = max(1, int(min(rect.width, rect.height) / 10))
-            draw.circle(self.screen, color, rect.center, radius)
+            self.mlxadapter.draw_circle(self.screen, color, rect.center, radius)
+            # draw.circle(self.screen, color, rect.center, radius)
         for pacgum in self.super_pacgums:
             pixels = self.maze_grid.calculate_pixels_tuple(
                 (pacgum.x, pacgum.y))
             rect = self.maze_grid.calculate_rect_for_cell(pixels)
             radius = max(1, int(min(rect.width, rect.height) / 3))
-            draw.circle(self.screen, color, rect.center, radius)
+            self.mlxadapter.draw_circle(self.screen, color, rect.center, radius)
+            # draw.circle(self.screen, color, rect.center, radius)
 
     def eat_pacgums(self) -> None:
         for pacgum in list(self.pacgums):
