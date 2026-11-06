@@ -1,7 +1,6 @@
 import sys
 import pygame
 from src.Config.ConfigParser import ConfigParser
-from src.Entities.EntityFactory import EntityFactory
 from src.Pygame.MazeUi import MazeUi
 from src.Pygame.EntitiesAdapter import EntitiesAdapter
 from src.Pygame.Menu import MainMenu
@@ -24,7 +23,6 @@ def main() -> None:
     exit_code = 0
     try:
         parser = ConfigParser(config_path)
-        entityFactory = EntityFactory()
 
         while True:
             mazeUi = MazeUi(parser.config)

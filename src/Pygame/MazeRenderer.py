@@ -589,10 +589,11 @@ class MazeRenderer:
             if self.time_counter >= movement_interval:
                 if player.current_direction == MovingDirection.NOT_MOVING:
                     player.update_direction()
-                if player.current_direction != MovingDirection.NOT_MOVING:
+                moving = (player.current_direction
+                          != MovingDirection.NOT_MOVING)
+                if moving:
                     self.calculate_next_movement(player)
-                    actual_direction = player.current_direction
-                    if actual_direction == MovingDirection.NOT_MOVING:
+                    if player.current_direction == MovingDirection.NOT_MOVING:
                         self.eat_pacgums()
                 player_pos = (player.x, player.y)
                 if not player.is_ghost_freeze():

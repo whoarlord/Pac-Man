@@ -151,5 +151,7 @@ class MazeUi:
         if (red_ghost.color == Ghost.GhostColor.RED):
             self.red_ghost = red_ghost
 
-    def get_red_ghost_pos(self) -> tuple[int, int]:
+    def get_red_ghost_pos(self) -> tuple[int, int] | None:
+        if self.red_ghost is None:
+            return None
         return self.red_ghost.get_coordinates()
