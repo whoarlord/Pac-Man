@@ -21,6 +21,8 @@ class Ghost(MovementEntity):
         PINK = 'pink'
 
     MAX_WAIT_TICKS = 12
+    CLYDE_DISTANCE = 8
+    CLYDE_MARGIN = 3
 
     def __init__(self, x: int, y: int, x_pixel: int,
                  y_pixel: int, image: Surface,
@@ -40,6 +42,7 @@ class Ghost(MovementEntity):
         self.home_x = x
         self.home_y = y
         self.wait_ticks = 0
+        self.retreating = False
 
     def get_home_coordinates(self) -> tuple[int, int]:
         return (self.home_x, self.home_y)
@@ -228,9 +231,11 @@ class Ghost(MovementEntity):
         distance = self._get_distance_to_actual_cell(self.get_coordinates(),
                                                      player_pos)
         print(f"distance from player {distance}")
-        if (distance <= 8):
-            return False
-        return True
+        if self.retreating:
+            if distance > self.CLYDE_DISTANCE + self.CLYDE_MARGIN:
+                self.retreating = False
+        elif distance < self.CLYDE_DISTANCE:
+            self.retreating = True
 
     @staticmethod
     def extend_line(a: tuple[int, int], b: tuple[int, int]) -> tuple[int, int]:
@@ -259,14 +264,15 @@ class Ghost(MovementEntity):
             else:
                 target_cell = player_pos
         elif (self.color == self.GhostColor.YELLOW):
-            if (not self.target_for_yellow(player_pos)):
+            self.target_for_yellow(player_pos)
+            if (self.retreating):
                 self.run_to_home(blocked)
                 return
         target_cell = self._choose_cell(target_cell, True, blocked)
         self._move_to(target_cell)
 
     def run_to_home(self, blocked: set[tuple[int, int]] | None = None) -> None:
-        cell = self._choose_cell(self.get_home_coordinates(), False, blocked)
+        cell = self._choose_cell(self.get_home_coordinates(), True, blocked)
         self._move_to(cell)
 
     def is_eaten(self) -> bool:
