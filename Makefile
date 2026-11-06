@@ -1,6 +1,9 @@
 CONFIG=config.json
 DEBUGGER= -m pdb
 
+PYINSTALLER=$(VIRTUALENV)/bin/pyinstaller
+PACKAGE_DIR=dist/pac-man
+
 VIRTUALENV= PacEnv
 PYTHON=$(VIRTUALENV)/bin/python3
 PIP=$(VIRTUALENV)/bin/pip
@@ -20,6 +23,14 @@ MYPYFLAGS=--warn-return-any --warn-unused-ignores --ignore-missing-imports --dis
 .PHONY: all install install-module run debug clean lint lint-strict
 
 .SILENT: all install install-module run debug clean lint lint-strict
+
+package: $(VIRTUALENV)
+	$(PIP) install pyinstaller
+	$(PYINSTALLER) --noconfirm --clean --name pac-man \
+		--add-data "src/img:src/img" pac-man.py
+	cp config.json $(PACKAGE_DIR)/
+	cp packaging/launch.sh packaging/README.txt $(PACKAGE_DIR)/
+	cd dist && zip -r pac-man-linux.zip pac-man
 
 all: run
 

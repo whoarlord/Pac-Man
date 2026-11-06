@@ -10,7 +10,7 @@ from src.Pygame.MazeRenderer import MazeRenderer
 from src.Pygame.EndScreens import GameOverScreen, VictoryScreen
 
 
-if __name__ == '__main__':
+def main() -> None:
     if len(sys.argv) != 2:
         print("Usage: python3 pac-man.py <config.json>", file=sys.stderr)
         sys.exit(1)
@@ -74,3 +74,7 @@ if __name__ == '__main__':
     finally:
         pygame.quit()
     sys.exit(exit_code)
+
+
+if __name__ == '__main__':
+    main()
