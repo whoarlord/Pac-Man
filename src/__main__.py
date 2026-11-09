@@ -40,7 +40,6 @@ def main() -> None:
             menu.state = "MAIN"
             menu.run()
 
-            # mazeUi.reset()
             maze_renderer.setup_entities()
             maze_renderer.load_first_level()
             maze_renderer.event_loop()

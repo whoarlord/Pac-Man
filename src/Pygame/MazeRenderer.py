@@ -37,10 +37,10 @@ class MazeRenderer:
         self.pause_veil.set_alpha(150)
         self.pause_veil.fill((0, 0, 0))
 
-    def place_player_center(self, player: Surface) -> None:
+    """ def place_player_center(self, player: Surface) -> None:
         x, y = self.maze_grid.calculate_center()
         pixels = self.maze_grid.calculate_pixels_tuple((x, y))
-        self.place_element(player, pixels)
+        self.place_element(player, pixels) """
 
     def place_entity(self, player: MovementEntity) -> None:
         pixels = player.get_pixels()
@@ -465,12 +465,12 @@ class MazeRenderer:
         self.setup_ghosts()
         self.setup_pacgums()
 
-    def reset(self) -> None:
+    """ def reset(self) -> None:
         width = self.game_state.config.levels[0].width
         height = self.game_state.config.levels[0].height
         self.game_state.reset(width, height)
         self.maze_grid.reset(width, height)
-        self.screen.fill("black")
+        self.screen.fill("black") """
 
     def draw_pause_menu(self) -> None:
         self.screen.blit(self.pause_veil, (0, 0))

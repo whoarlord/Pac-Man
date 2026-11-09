@@ -36,7 +36,6 @@ class MazeUi:
         self.red_ghost: Ghost | None = None
         self.power_up_timer = 0
         self.POWER_UP_DURATION = 7000
-        self.RESPAWN_DELAY = 5000
         self.level_timer = 0
         self.paused = False
         self.pause_index = 0
@@ -48,7 +47,7 @@ class MazeUi:
         height = self.config.levels[self.current_level].height
         return (width, height)
 
-    def reset(self, width: int, height: int) -> None:
+    """ def reset(self, width: int, height: int) -> None:
         self.initializeMaze(width, height)
         self.ghosts = []
         self.pacgums = []
@@ -62,7 +61,7 @@ class MazeUi:
         self.life_anim_active = False
         self.life_anim_time = 0
         self.life_anim_duration = 1000
-        self.life_anim_image = None
+        self.life_anim_image = None """
 
     def get_maze_cell(self, x: int, y: int) -> int:
         return int(self.maze.maze[y][x])
@@ -71,8 +70,8 @@ class MazeUi:
         return max(0, self.config.level_max_time
                    - self.level_timer // 1000)
 
-    def saveImage(self, image: pygame.Surface, name: str) -> None:
-        pygame.image.save(image, name)
+    """ def saveImage(self, image: pygame.Surface, name: str) -> None:
+        pygame.image.save(image, name) """
 
     def initializeMaze(self, width: int, height: int) -> None:
         seed = self.config.seed if self.current_level == 0 else 0
