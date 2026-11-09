@@ -314,14 +314,12 @@ class MazeRenderer:
             rect = self.maze_grid.calculate_rect_for_cell(pixels)
             radius = max(1, int(min(rect.width, rect.height) / 10))
             self.mlxadapter.draw_circle(self.screen, color, rect.center, radius)
-            # draw.circle(self.screen, color, rect.center, radius)
         for pacgum in self.super_pacgums:
             pixels = self.maze_grid.calculate_pixels_tuple(
                 (pacgum.x, pacgum.y))
             rect = self.maze_grid.calculate_rect_for_cell(pixels)
             radius = max(1, int(min(rect.width, rect.height) / 3))
             self.mlxadapter.draw_circle(self.screen, color, rect.center, radius)
-            # draw.circle(self.screen, color, rect.center, radius)
 
     def eat_pacgums(self) -> None:
         for pacgum in list(self.pacgums):

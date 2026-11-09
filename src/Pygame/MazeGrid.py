@@ -44,12 +44,6 @@ class MazeGrid:
         self.offset_y = self.margin_top_height + (
             self.maze_height - (square_size * self.height)) // 2
 
-    """ def calculate_cell_size(self) -> Tuple[int, int]:
-        ideal_width = int((self.window_width - self.margin) / self.width)
-        ideal_height = int((self.maze_height - self.margin) / self.height)
-        square_size = min(ideal_width, ideal_height)
-        return (square_size, square_size) """
-
     def get_cell_size(self) -> tuple[int, int]:
         return self.cell_size
 

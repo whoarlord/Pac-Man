@@ -1,9 +1,8 @@
 import sys
-import os
-import json
 import pygame
 from typing import Any
 from src.Config.ConfigParser import GameConfigModel
+from src.Pygame.HighscoreStorage import HighscoreStorage
 
 
 class MainMenu:
@@ -18,6 +17,7 @@ class MainMenu:
         self.selected_index = 0
         self.state = "MAIN"
         self.scores: list[dict[str, Any]] = []
+        self.storage = HighscoreStorage(self.config)
 
     def _draw_main_menu(self) -> None:
         screen_width = self.screen.get_width()
@@ -55,7 +55,7 @@ class MainMenu:
             "• A Super Pac-gum makes ghosts edible for 7 seconds.",
             "• An eaten ghost returns to its corner and comes back after 5 s.",
             "• Touching a ghost that is not edible costs a life.",
-            "• If the level timer reaches 0, you also lose a life.",
+            "• If the level timer reaches 0, you lose the game.",
             "",
             "CHEATS:",
             "• I: invincible   V: extra life   B: speed   F: freeze   L: skip",
@@ -71,28 +71,6 @@ class MainMenu:
                                              True, (150, 150, 150))
         x_back = (screen_width - back_surface.get_width()) // 2
         self.screen.blit(back_surface, (x_back, 850))
-
-    def _get_scores(self, element: dict[str, Any]) -> int:
-        if not isinstance(element, dict):
-            return 0
-        try:
-            return int(float(element.get("score", 0)))
-        except (ValueError, TypeError, OverflowError):
-            return 0
-
-    def _load_scores(self) -> list[dict[str, Any]]:
-        filename = self.config.highscore_filename
-        if not os.path.exists(filename):
-            return []
-        try:
-            with open(filename, "r", encoding="utf-8") as f:
-                data = json.load(f)
-        except Exception:
-            return []
-        if not isinstance(data, list):
-            return []
-        valid = [entry for entry in data if isinstance(entry, dict)]
-        return sorted(valid, key=self._get_scores, reverse=True)
 
     def _draw_highscores(self) -> None:
         screen_width = self.screen.get_width()
@@ -119,7 +97,7 @@ class MainMenu:
                     name = str(name_raw)[:10]
                 else:
                     name = "UNKNOWN"
-                score = self._get_scores(entry)
+                score = self.storage.get_score(entry)
 
                 y_pos = 220 + i * 45
 
@@ -146,7 +124,7 @@ class MainMenu:
         if selected == "Start Game":
             return "START_GAME"
         elif selected == "View Highscores":
-            self.scores = self._load_scores()
+            self.scores = self.storage.load_scores()
             self.state = "HIGHSCORES"
         elif selected == "Instructions":
             self.state = "INSTRUCTIONS"
