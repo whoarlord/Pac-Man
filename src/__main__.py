@@ -1,7 +1,6 @@
 import sys
 import pygame
 from src.Config.ConfigParser import ConfigParser
-from src.Entities.EntityFactory import EntityFactory
 from src.Pygame.MazeUi import MazeUi
 from src.Pygame.EntitiesAdapter import EntitiesAdapter
 from src.Pygame.Menu import MainMenu
@@ -10,7 +9,7 @@ from src.Pygame.MazeRenderer import MazeRenderer
 from src.Pygame.EndScreens import GameOverScreen, VictoryScreen
 
 
-if __name__ == '__main__':
+def main() -> None:
     if len(sys.argv) != 2:
         print("Usage: python3 pac-man.py <config.json>", file=sys.stderr)
         sys.exit(1)
@@ -24,7 +23,6 @@ if __name__ == '__main__':
     exit_code = 0
     try:
         parser = ConfigParser(config_path)
-        entityFactory = EntityFactory()
 
         while True:
             mazeUi = MazeUi(parser.config)
@@ -42,7 +40,6 @@ if __name__ == '__main__':
             menu.state = "MAIN"
             menu.run()
 
-            # mazeUi.reset()
             maze_renderer.setup_entities()
             maze_renderer.load_first_level()
             maze_renderer.event_loop()
@@ -74,3 +71,7 @@ if __name__ == '__main__':
     finally:
         pygame.quit()
     sys.exit(exit_code)
+
+
+if __name__ == '__main__':
+    main()

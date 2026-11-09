@@ -227,7 +227,7 @@ class Ghost(MovementEntity):
             target_cell = player_pos
         return target_cell
 
-    def target_for_yellow(self, player_pos: tuple[int, int]) -> bool:
+    def target_for_yellow(self, player_pos: tuple[int, int]) -> None:
         distance = self._get_distance_to_actual_cell(self.get_coordinates(),
                                                      player_pos)
         print(f"distance from player {distance}")
