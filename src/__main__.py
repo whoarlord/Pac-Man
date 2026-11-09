@@ -1,5 +1,6 @@
 import sys
 import pygame
+import traceback
 from src.Config.ConfigParser import ConfigParser
 from src.Pygame.MazeUi import MazeUi
 from src.Pygame.EntitiesAdapter import EntitiesAdapter
@@ -67,6 +68,7 @@ def main() -> None:
         exit_code = 1
     except Exception as e:
         print(f"Unexpected error: {e}", file=sys.stderr)
+        traceback.print_exc()
         exit_code = 1
     finally:
         pygame.quit()
