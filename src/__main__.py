@@ -7,6 +7,10 @@ from src.Pygame.Menu import MainMenu
 from src.Pygame.MazeGrid import MazeGrid
 from src.Pygame.MazeRenderer import MazeRenderer
 from src.Pygame.EndScreens import GameOverScreen, VictoryScreen
+from src.Game.LevelLoader import LevelLoader
+from src.Game.GameRules import GameRules
+from src.Game.MovementController import MovementController
+from src.Game.GameController import GameController
 
 
 def main() -> None:
@@ -40,9 +44,23 @@ def main() -> None:
             menu.state = "MAIN"
             menu.run()
 
-            maze_renderer.setup_entities()
-            maze_renderer.load_first_level()
-            maze_renderer.event_loop()
+            level_loader = LevelLoader(mazeUi, maze_grid, entity_adapter)
+            game_rules = GameRules(mazeUi, maze_grid, level_loader)
+            movement_controller = MovementController(mazeUi, maze_grid,
+                                                     entity_adapter)
+
+            game_controller = GameController(
+                game_state=mazeUi,
+                renderer=maze_renderer,
+                level_loader=level_loader,
+                rules=game_rules,
+                movement_controller=movement_controller
+            )
+
+            level_loader.setup_entities()
+            level_loader.load_first_level()
+
+            game_controller.run()
 
             if mazeUi.player.lives <= 0:
                 end_screen = GameOverScreen(maze_renderer.screen,

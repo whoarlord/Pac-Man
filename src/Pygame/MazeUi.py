@@ -38,9 +38,11 @@ class MazeUi:
         self.red_ghost: Ghost | None = None
         self.power_up_timer = 0
         self.POWER_UP_DURATION = 7000
+        self.RESPAWN_DELAY = 5000
         self.level_timer = 0
         self.paused = False
         self.pause_index = 0
+        self.pause_options = ["Resume", "Return to Main Menu"]
         self.back_to_menu = False
         self.running = True
         self.maze_width = 0
