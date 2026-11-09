@@ -1,9 +1,7 @@
 import sys
-import os
-import json
 import pygame
-from typing import Any
 from src.Config.ConfigParser import GameConfigModel
+from src.Pygame.HighscoreStorage import HighscoreStorage
 
 
 class EndScreenBase:
@@ -20,75 +18,7 @@ class EndScreenBase:
         self.confirm_overwrite = False
         self.existing_score = 0
         self.save_failed = False
-
-    def _load_scores(self) -> list[dict[str, Any]]:
-        filename = self.config.highscore_filename
-        if not os.path.exists(filename):
-            return []
-        try:
-            with open(filename, "r", encoding="utf-8") as f:
-                data = json.load(f)
-        except OSError:
-            return []
-        except ValueError:
-            data = None
-        if isinstance(data, list):
-            return data
-        self._malformed_highscore(filename)
-        return []
-
-    @staticmethod
-    def _malformed_highscore(filename: str) -> None:
-        backup = "malformed_highscore.txt"
-        try:
-            os.replace(filename, backup)
-            print(f"Warning: '{filename}' is not valid. "
-                  f"A copy was saved as '{backup}'.")
-        except OSError as e:
-            print(f"Warning: could not back up '{filename}': {e}")
-
-    def _find_entry(self, name: str) -> dict[str, Any] | None:
-        name_clean = name.strip()
-
-        for entry in self._load_scores():
-            if not isinstance(entry, dict):
-                continue
-            registered_name = str(entry.get("name", "")).strip()
-            if registered_name == name_clean:
-                return entry
-        return None
-
-    @staticmethod
-    def _get_score(entry: dict[str, Any]) -> int:
-        try:
-            val = entry.get("score", 0)
-            return int(float(val))
-        except (ValueError, TypeError, OverflowError):
-            return 0
-
-    def _save_highscore(self) -> bool:
-        filename = self.config.highscore_filename
-        name_to_save = self.player_name.strip()
-        if not name_to_save:
-            name_to_save = "PLAYER"
-
-        scores_list = [
-            entry for entry in self._load_scores()
-            if isinstance(entry, dict)
-            and str(entry.get("name", "")).strip() != name_to_save
-        ]
-        scores_list.append({"name": name_to_save, "score": self.final_score})
-        scores_list.sort(key=self._get_score, reverse=True)
-        top_scores = scores_list[:10]
-        tmp_filename = filename + ".tmp"
-        try:
-            with open(tmp_filename, "w", encoding="utf-8") as f:
-                json.dump(top_scores, f, indent=4, ensure_ascii=False)
-            os.replace(tmp_filename, filename)
-        except Exception as e:
-            print(f"Error saving highscores: {e}")
-            return False
-        return True
+        self.storage = HighscoreStorage(self.config)
 
     def handle_events(self) -> None:
         for event in pygame.event.get():
@@ -100,11 +30,12 @@ class EndScreenBase:
                     name_to_check = self.player_name.strip()
                     if not name_to_check:
                         name_to_check = "PLAYER"
-                    entry = self._find_entry(name_to_check)
+                    entry = self.storage.find_entry(name_to_check)
                     if entry is not None and not self.confirm_overwrite:
-                        self.existing_score = self._get_score(entry)
+                        self.existing_score = self.storage.get_score(entry)
                         self.confirm_overwrite = True
-                    elif self.save_failed or self._save_highscore():
+                    elif self.save_failed or self.storage.save_highscore(
+                            self.player_name, self.final_score):
                         self.running = False
                     else:
                         self.save_failed = True
@@ -181,7 +112,6 @@ class GameOverScreen(EndScreenBase):
 
 
 class VictoryScreen(EndScreenBase):
-
     def draw(self) -> None:
         self.screen.fill((0, 0, 0))
         width = self.screen.get_width()
