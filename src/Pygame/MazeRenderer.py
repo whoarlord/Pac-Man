@@ -192,8 +192,8 @@ class MazeRenderer:
         display.flip()
         time.wait(800)
 
-        self.pacgums.clear()
-        self.super_pacgums.clear()
+        self.game_state.pacgums.clear()
+        self.game_state.super_pacgums.clear()
 
     def make_ghost_by_color(self, ghost: Ghost) -> None:
         scared: bool = ghost.is_scared()
@@ -308,8 +308,8 @@ class MazeRenderer:
         self.game_state.ghosts = ghosts
 
     def setup_pacgums(self) -> None:
-        self.pacgums = []
-        self.super_pacgums = []
+        self.game_state.pacgums = []
+        self.game_state.super_pacgums = []
         entity_factory = self.game_state.entity_factory
         width = self.maze_grid.get_width()
         height = self.maze_grid.get_height()
@@ -335,19 +335,21 @@ class MazeRenderer:
                                                 occupied)
 
         for x, y in corners:
-            self.super_pacgums.append(entity_factory.create_pacgum(x, y, True))
+            self.game_state.super_pacgums.append(entity_factory.create_pacgum(
+                x, y, True))
         for x, y in positions:
-            self.pacgums.append(entity_factory.create_pacgum(x, y, False))
+            self.game_state.pacgums.append(entity_factory.create_pacgum(
+                x, y, False))
 
     def draw_pacgums(self) -> None:
         color = (255, 184, 174)
-        for pacgum in self.pacgums:
+        for pacgum in self.game_state.pacgums:
             pixels = self.maze_grid.calculate_pixels_tuple(
                 (pacgum.x, pacgum.y))
             rect = self.maze_grid.calculate_rect_for_cell(pixels)
             radius = max(1, int(min(rect.width, rect.height) / 10))
             draw.circle(self.screen, color, rect.center, radius)
-        for pacgum in self.super_pacgums:
+        for pacgum in self.game_state.super_pacgums:
             pixels = self.maze_grid.calculate_pixels_tuple(
                 (pacgum.x, pacgum.y))
             rect = self.maze_grid.calculate_rect_for_cell(pixels)
@@ -355,15 +357,15 @@ class MazeRenderer:
             draw.circle(self.screen, color, rect.center, radius)
 
     def eat_pacgums(self) -> None:
-        for pacgum in list(self.pacgums):
+        for pacgum in list(self.game_state.pacgums):
             if (pacgum.x == self.game_state.player.x and
                     pacgum.y == self.game_state.player.y):
-                self.pacgums.remove(pacgum)
+                self.game_state.pacgums.remove(pacgum)
                 self.game_state.player.add_pacgum_points()
-        for pacgum in list(self.super_pacgums):
+        for pacgum in list(self.game_state.super_pacgums):
             if (pacgum.x == self.game_state.player.x and
                     pacgum.y == self.game_state.player.y):
-                self.super_pacgums.remove(pacgum)
+                self.game_state.super_pacgums.remove(pacgum)
                 self.game_state.player.add_super_pacgum_points()
                 self.game_state.player.power_up()
                 self.game_state.scare_ghosts()
@@ -535,7 +537,8 @@ class MazeRenderer:
                 player.lives = 0
                 self.game_state.running = False
                 self.game_state.level_timer = 0
-            if not self.pacgums and not self.super_pacgums:
+            if (not self.game_state.pacgums and
+                    not self.game_state.super_pacgums):
                 self.load_level()
                 clock.tick()
                 self.time_counter = 0
