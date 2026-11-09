@@ -33,6 +33,8 @@ class MazeUi:
         self.pacgums: list[Pacgum] = []
         self.super_pacgums: list[Pacgum] = []
         self.entity_factory: EntityFactory = EntityFactory()
+        self.entity_factory.set_can_move(self.can_move)
+        self.entity_factory.set_available_cell(self.available_cell)
         self.red_ghost: Ghost | None = None
         self.power_up_timer = 0
         self.POWER_UP_DURATION = 7000
@@ -41,6 +43,8 @@ class MazeUi:
         self.pause_index = 0
         self.back_to_menu = False
         self.running = True
+        self.maze_width = 0
+        self.maze_height = 0
 
     def get_actual_level_size(self) -> tuple[int, int]:
         width = self.config.levels[self.current_level].width
@@ -55,6 +59,8 @@ class MazeUi:
                    - self.level_timer // 1000)
 
     def initializeMaze(self, width: int, height: int) -> None:
+        self.maze_width = width
+        self.maze_height = height
         seed = self.config.seed if self.current_level == 0 else 0
         try:
             self.maze: MazeGenerator = MazeGenerator((width, height),
@@ -135,3 +141,38 @@ class MazeUi:
         if self.red_ghost is None:
             return None
         return self.red_ghost.get_coordinates()
+
+    def can_move(self, origin: tuple[int, int],
+                 target: tuple[int, int]) -> bool:
+        x_target, y_target = target
+        if (x_target < 0 or x_target >= self.maze_width or y_target < 0
+                or y_target >= self.maze_height):
+            return False
+        x_origin, y_origin = origin
+        actual_cell = self.get_maze_cell(x_origin, y_origin)
+        dx = x_target - x_origin
+        dy = y_target - y_origin
+        if dx == 0 and dy == -1:
+            wall = 1
+        elif dx == 1 and dy == 0:
+            wall = 2
+        elif dx == 0 and dy == 1:
+            wall = 4
+        elif dx == -1 and dy == 0:
+            wall = 8
+        else:
+            return False
+        return bool((actual_cell & wall) == 0)
+
+    def available_cell(self, target: tuple[int, int]) -> bool:
+        x_target, y_target = target
+        if (x_target < 0 or x_target >= self.maze_width or y_target < 0
+                or y_target >= self.maze_height):
+            return False
+        return True
+
+    def is_walkable(self, cell: tuple[int, int]) -> bool:
+        x, y = cell
+        if not (0 <= x < self.maze_width and 0 <= y < self.maze_height):
+            return False
+        return bool(self.get_maze_cell(x, y) != 15)

@@ -14,8 +14,6 @@ class MazeRenderer:
         self.maze_grid = maze_grid
         self.game_state = game_state
         self.entity_adapter = entity_adapter
-        self.game_state.entity_factory.set_can_move(self.can_move)
-        self.game_state.entity_factory.set_available_cell(self.available_cell)
         self.screen: Surface = display.set_mode(
             self.maze_grid.get_window_size())
         self.screen.fill("black")
@@ -320,17 +318,11 @@ class MazeRenderer:
         occupied = set(corners)
         occupied.add(center)
 
-        def is_walkable(cell: tuple[int, int]) -> bool:
-            x, y = cell
-            if not (0 <= x < width and 0 <= y < height):
-                return False
-            return bool(self.game_state.get_maze_cell(x, y) != 15)
-
         free_cells = 0
         for x in range(width):
             for y in range(height):
                 cell = (x, y)
-                if is_walkable(cell) and cell not in occupied:
+                if self.game_state.is_walkable(cell) and cell not in occupied:
                     free_cells += 1
         pacgum_ratio = self.game_state.config.PACGUM_RATIO
         if self.game_state.config.pacgum is None:
@@ -338,7 +330,9 @@ class MazeRenderer:
         else:
             amount = min(self.game_state.config.pacgum, free_cells)
         positions = Pacgum.get_random_positions(width, height,
-                                                amount, is_walkable, occupied)
+                                                amount,
+                                                self.game_state.is_walkable,
+                                                occupied)
 
         for x, y in corners:
             self.super_pacgums.append(entity_factory.create_pacgum(x, y, True))
@@ -487,35 +481,6 @@ class MazeRenderer:
             if gs.pause_index == 1:
                 gs.back_to_menu = True
                 gs.running = False
-
-    def can_move(self, origin: tuple[int, int],
-                 target: tuple[int, int]) -> bool:
-        x_target, y_target = target
-        if (x_target < 0 or x_target >= self.maze_grid.width or y_target < 0
-                or y_target >= self.maze_grid.height):
-            return False
-        x_origin, y_origin = origin
-        actual_cell = self.game_state.get_maze_cell(x_origin, y_origin)
-        dx = x_target - x_origin
-        dy = y_target - y_origin
-        if dx == 0 and dy == -1:
-            wall = 1
-        elif dx == 1 and dy == 0:
-            wall = 2
-        elif dx == 0 and dy == 1:
-            wall = 4
-        elif dx == -1 and dy == 0:
-            wall = 8
-        else:
-            return False
-        return bool((actual_cell & wall) == 0)
-
-    def available_cell(self, target: tuple[int, int]) -> bool:
-        x_target, y_target = target
-        if (x_target < 0 or x_target >= self.maze_grid.width or y_target < 0
-                or y_target >= self.maze_grid.height):
-            return False
-        return True
 
     def extra_life_animation(self) -> None:
         self.life_anim_active = True
