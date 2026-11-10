@@ -1,7 +1,7 @@
 import sys
 import pygame
 from src.Config.ConfigParser import GameConfigModel
-from src.Pygame.HighscoreStorage import HighscoreStorage
+from src.Ui.HighscoreStorage import HighscoreStorage
 
 
 class EndScreenBase:

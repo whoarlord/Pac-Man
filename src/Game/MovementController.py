@@ -1,13 +1,13 @@
-from src.Pygame.MazeUi import MazeUi
-from src.Pygame.MazeGrid import MazeGrid
-from src.Pygame.EntitiesAdapter import EntitiesAdapter
+from src.Game.GameState import GameState
+from src.Ui.MazeGrid import MazeGrid
+from src.Ui.EntitiesAdapter import EntitiesAdapter
 from src.Entities.MovementEntity import MovementEntity, MovingDirection
 from src.Entities.Player import Player
 from src.Entities.Ghost import Ghost
 
 
 class MovementController:
-    def __init__(self, game_state: MazeUi, maze_grid: MazeGrid,
+    def __init__(self, game_state: GameState, maze_grid: MazeGrid,
                  entity_adapter: EntitiesAdapter) -> None:
         self.game_state = game_state
         self.maze_grid = maze_grid

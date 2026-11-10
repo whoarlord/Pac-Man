@@ -1,6 +1,6 @@
 import pygame
-from src.Pygame.MazeUi import MazeUi
-from src.Pygame.MazeRenderer import MazeRenderer
+from src.Game.GameState import GameState
+from src.Ui.MazeRenderer import MazeRenderer
 from src.Game.LevelLoader import LevelLoader
 from src.Game.GameRules import GameRules
 from src.Game.MovementController import MovementController
@@ -8,7 +8,7 @@ from src.Entities.MovementEntity import MovingDirection
 
 
 class GameController:
-    def __init__(self, game_state: MazeUi, renderer: MazeRenderer,
+    def __init__(self, game_state: GameState, renderer: MazeRenderer,
                  level_loader: LevelLoader, rules: GameRules,
                  movement_controller: MovementController) -> None:
         self.game_state = game_state
