@@ -15,8 +15,8 @@ class MLXAdapter:
     def draw_line(self, surface: Surface, source: Cell,
                   target: Cell, color: Color) -> None:
         actual_pixel: list[int] = list(source)
-        while (actual_pixel != target):
-            surface.set_at(actual_pixel, color)
+        while (tuple(actual_pixel) != target):
+            surface.set_at(tuple(actual_pixel), color)
             actual_pixel = self.aproximate_coordinates(actual_pixel, target)
         surface.set_at(actual_pixel, color)
 
@@ -26,7 +26,7 @@ class MLXAdapter:
             surface.set_at(cell, color)
 
     def draw_circle(self, surface: Surface, color: Color,
-                    center: Cell, radius: int):
+                    center: Cell, radius: int) -> None:
         cx, cy = center
         for y in range(cy - radius, cy + radius + 1):
             for x in range(cx - radius, cx + radius + 1):
@@ -41,9 +41,9 @@ class MLXAdapter:
             return source - 1
         return source
 
-    def aproximate_coordinates(self, source: list[int, int],
+    def aproximate_coordinates(self, source: list[int],
                                target: Cell
-                               ) -> list[int, int]:
+                               ) -> list[int]:
         source[0] = self.aproximate_integers(source[0], target[0])
         source[1] = self.aproximate_integers(source[1], target[1])
         return source

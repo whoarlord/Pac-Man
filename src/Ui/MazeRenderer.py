@@ -1,8 +1,11 @@
-from src.Ui import MazeGrid, EntitiesAdapter, MLXAdapter
-from src.Game import GameState
+from src.Ui.MazeGrid import MazeGrid
+from src.Ui.EntitiesAdapter import EntitiesAdapter
+from src.Ui.MLXAdapter import MLXAdapter
+from src.Game.GameState import GameState
 from pygame import (Surface, draw, display, font, time)
 from typing import Tuple
-from src.Entities import (MovementEntity, Ghost)
+from src.Entities.Ghost import Ghost
+from src.Entities.MovementEntity import MovementEntity
 
 
 class MazeRenderer:
