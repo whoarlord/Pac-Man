@@ -55,7 +55,7 @@ class EntitiesAdapter:
         if route in self.cache:
             return self.cache[route]
         try:
-            img = pygame.image.load(route).convert_alpha()
+            img = pygame.image.load(route)
         except pygame.error as e:
             raise pygame.error(f"Cannot load image '{route}': {e}") from e
         scaled = self.mlx_adapter.scale_image(img, self.entity_dimensions)
@@ -67,7 +67,7 @@ class EntitiesAdapter:
         if key in self.cache:
             return self.cache[key]
         try:
-            img = pygame.image.load(route).convert_alpha()
+            img = pygame.image.load(route)
         except pygame.error as e:
             raise pygame.error(f"Cannot load image '{route}': {e}") from e
         scaled = self.mlx_adapter.scale_image(img, self.ICON_SIZE)

@@ -44,18 +44,19 @@ class GameController:
         movement_interval = 35
         time_counter = 0
         self.game_state.running = True
+        self.renderer.draw_maze()
 
         while self.game_state.running:
             dt = min(clock.tick(60), 100)
             animations = self.game_state.bind_events(self.handle_pause_key)
 
             if self.game_state.paused:
-                self.renderer.draw_map(0)
+                self.renderer.draw_map()
                 self.renderer.draw_pause_menu()
                 pygame.display.flip()
                 continue
 
-            self.renderer.draw_map(dt)
+            self.renderer.draw_map()
             self.rules.check_collisions()
             self.handle_animations(animations)
             self.rules.update_timers(dt)
@@ -63,6 +64,7 @@ class GameController:
             if (not self.game_state.pacgums and
                     not self.game_state.super_pacgums):
                 self.level_loader.load_level()
+                self.renderer.draw_maze()
                 clock.tick()
                 time_counter = 0
 

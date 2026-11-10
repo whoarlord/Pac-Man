@@ -12,13 +12,23 @@ class MLXAdapter:
         'orange': (255, 140, 0)
     }
 
-    def draw_line(self, surface: Surface, source: Cell,
-                  target: Cell, color: Color) -> None:
+    def draw_line(self, surface: Surface, color: Color,
+                  source: Cell, target: Cell, thick: int = 1):
+        half = thick // 2
+        for x, y in self.get_line(list(source), list(target)):
+            for dy in range(-half, thick - half):
+                for dx in range(-half, thick - half):
+                    surface.set_at((x + dx, y + dy), color)
+
+    def get_line(self, source: list[int],  target: list[int]
+                 ) -> list[list[int]]:
         actual_pixel: list[int] = list(source)
+        result_pixels: list[list[int]] = []
         while (actual_pixel != target):
-            surface.set_at(actual_pixel, color)
+            result_pixels.append(actual_pixel)
             actual_pixel = self.aproximate_coordinates(actual_pixel, target)
-        surface.set_at(actual_pixel, color)
+        result_pixels.append(target)
+        return result_pixels
 
     def draw_cells(self, surface: Surface, cells: list[Cell],
                    color: Color) -> None:
@@ -41,12 +51,13 @@ class MLXAdapter:
             return source - 1
         return source
 
-    def aproximate_coordinates(self, source: list[int, int],
-                               target: Cell
-                               ) -> list[int, int]:
-        source[0] = self.aproximate_integers(source[0], target[0])
-        source[1] = self.aproximate_integers(source[1], target[1])
-        return source
+    def aproximate_coordinates(self, source: list[int],
+                               target: list[int]
+                               ) -> list[int]:
+        result: list[int] = [0, 0]
+        result[0] = self.aproximate_integers(source[0], target[0])
+        result[1] = self.aproximate_integers(source[1], target[1])
+        return result
 
     @staticmethod
     def distance(a: Cell, b: Cell) -> int:
