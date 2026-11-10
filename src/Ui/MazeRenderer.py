@@ -1,7 +1,7 @@
 """Drawing of the maze, the entities, the HUD and the effects."""
 
 from src.Ui import MazeGrid, EntitiesAdapter, MLXAdapter
-from src.Game import GameState
+from src.Game.GameState import GameState
 from pygame import (Surface, display, font, time, SRCALPHA)
 from typing import Tuple
 from src.Entities.Ghost import Ghost
@@ -98,8 +98,8 @@ class MazeRenderer:
         rect = self.maze_grid.calculate_rect_for_cell(coordinates)
         self.screen.blit(element, rect)
 
-    def create_rect(self, init_x: float, init_y: float, finish_x: float,
-                    finish_y: float, N: bool, E: bool, W: bool,
+    def create_rect(self, init_x: int, init_y: int, finish_x: int,
+                    finish_y: int, N: bool, E: bool, W: bool,
                     S: bool) -> None:
         """Draw the walls of a rectangle in maze_ui.
 

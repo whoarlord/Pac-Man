@@ -5,4 +5,5 @@ exclude =
     .mypy_cache,
     PacEnv,
     dist,
-    build
+    build,
+    .venv
