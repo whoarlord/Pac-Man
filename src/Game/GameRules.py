@@ -68,7 +68,7 @@ class GameRules:
                 elif not self.game_state.player.is_invincible():
                     self.lose_life_and_reset()
                     lives = self.game_state.player.lives
-                    print(f"¡You have been touched! Remaining lives: {lives}")
+                    print(f"You have been touched! Remaining lives: {lives}")
                     break
 
     def update_timers(self, dt: int) -> None:

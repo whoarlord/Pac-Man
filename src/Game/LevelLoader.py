@@ -113,8 +113,7 @@ class LevelLoader:
         self.game_state.player.desired_direction = MovingDirection.NOT_MOVING
 
     def initialize_level(self) -> None:
-        self.entity_adapter = EntitiesAdapter(self.maze_grid.get_cell_size())
-        self.entity_adapter.preload_images()
+        self.entity_adapter.resize(self.maze_grid.get_cell_size())
         self.game_state.player.set_image(self.entity_adapter.makePlayerImage(
             MovingDirection.NOT_MOVING))
         self.reset_player_position()
@@ -139,5 +138,3 @@ class LevelLoader:
         self.game_state.initializeMaze(self.maze_grid.width,
                                        self.maze_grid.height)
         self.setup_player()
-        self.setup_ghosts()
-        self.setup_pacgums()

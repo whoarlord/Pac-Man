@@ -47,15 +47,17 @@ class GameController:
 
         while self.game_state.running:
             dt = min(clock.tick(60), 100)
-            self.renderer.draw_map(dt)
-            self.rules.check_collisions()
             animations = self.game_state.bind_events(self.handle_pause_key)
-            self.handle_animations(animations)
 
             if self.game_state.paused:
+                self.renderer.draw_map(0)
                 self.renderer.draw_pause_menu()
                 pygame.display.flip()
                 continue
+
+            self.renderer.draw_map(dt)
+            self.rules.check_collisions()
+            self.handle_animations(animations)
             self.rules.update_timers(dt)
 
             if (not self.game_state.pacgums and

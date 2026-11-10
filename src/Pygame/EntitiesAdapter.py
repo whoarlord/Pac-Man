@@ -118,3 +118,8 @@ class EntitiesAdapter:
 
     def make_ghost_freeze_icon(self) -> pygame.Surface:
         return self._load_icon(f"{self.img_route}ghost_freeze.png")
+
+    def resize(self, entity_dimensions: Tuple[int, int]) -> None:
+        self.entity_dimensions = entity_dimensions
+        self.cache.clear()
+        self.preload_images()

@@ -230,7 +230,6 @@ class Ghost(MovementEntity):
     def target_for_yellow(self, player_pos: tuple[int, int]) -> None:
         distance = self._get_distance_to_actual_cell(self.get_coordinates(),
                                                      player_pos)
-        print(f"distance from player {distance}")
         if self.retreating:
             if distance > self.CLYDE_DISTANCE + self.CLYDE_MARGIN:
                 self.retreating = False

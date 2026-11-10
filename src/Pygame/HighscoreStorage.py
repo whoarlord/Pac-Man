@@ -15,7 +15,12 @@ class HighscoreStorage:
         try:
             with open(filename, "r", encoding="utf-8") as f:
                 data = json.load(f)
-        except (OSError, ValueError):
+        except ValueError:
+            self._malformed_highscore(filename)
+            return []
+        except OSError:
+            if os.path.isfile(filename):
+                self._malformed_highscore(filename)
             return []
         if isinstance(data, list):
             valid = [entry for entry in data if isinstance(entry, dict)]
