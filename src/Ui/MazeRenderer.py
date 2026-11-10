@@ -14,17 +14,12 @@ class MazeRenderer:
         self.entity_adapter = entity_adapter
         self.screen: Surface = display.set_mode(
             self.maze_grid.get_window_size())
-        # self.screen.fill('black')
         self.background = Surface(self.maze_grid.get_window_size())
         self.mlxadapter.set_color(self.background, 'black')
         self.initialize_veil()
         self.initialize_fire_efect()
         self.font = font.Font(None, 40)
         self.title_font = font.Font(None, 80)
-        self.life_anim_active = False
-        self.life_anim_time = 0
-        self.life_anim_image: Surface | None = None
-        self.life_anim_duration = 1000
         self.POWER_UP_WARNING = 2000
         self.BLINK_INTERVAL = 200
 
@@ -200,7 +195,14 @@ class MazeRenderer:
             self.screen.blit(text, (x, 450 + i * 70))
 
     def extra_life_animation(self) -> None:
-        self.life_anim_active = True
-        self.life_anim_time = 0
-        self.life_anim_image = (
-            self.entity_adapter.make_extra_live_icon())
+        original_icon = self.entity_adapter.make_extra_live_icon()
+        cell_w, cell_h = self.maze_grid.get_cell_size()
+        proportional_size = (cell_w * 3, cell_h * 3)
+        big_icon = self.mlxadapter.scale_image(original_icon,
+                                               proportional_size)
+        center_x, center_y = self.maze_grid.calculate_center_pixels()
+        icon_rect = big_icon.get_rect(center=(center_x, center_y))
+        self.draw_map(0)
+        self.screen.blit(big_icon, icon_rect.topleft)
+        display.flip()
+        time.wait(250)
