@@ -128,8 +128,10 @@ class MovementEntity():
     def update_direction(self) -> None:
         """Move the entity and update current_direction.
 
-        It first tries desired_direction. If there is none, it keeps
-        moving in current_direction. If neither is possible,
+        If desired_direction is not NOT_MOVING, it tries to move in that
+        direction and current_direction becomes desired_direction, even
+        if a wall blocked the move. If desired_direction is NOT_MOVING,
+        it tries to move one cell in current_direction and then
         current_direction becomes NOT_MOVING.
         """
 

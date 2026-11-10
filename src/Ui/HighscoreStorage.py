@@ -1,3 +1,5 @@
+"""Reading and writing of the highscores file."""
+
 import os
 import json
 from typing import Any
@@ -5,10 +7,37 @@ from src.Config.ConfigParser import GameConfigModel
 
 
 class HighscoreStorage:
+    """Loads and saves the highscores in a JSON file.
+
+    The file name is config.highscore_filename. It contains a list of
+    entries, each one a dictionary with the keys 'name' and 'score'.
+
+    Attributes:
+        config: Configuration of the game.
+    """
+
     def __init__(self, config: GameConfigModel) -> None:
+        """Create the storage.
+
+        Args:
+            config: Configuration of the game.
+        """
+
         self.config = config
 
     def load_scores(self) -> list[dict[str, Any]]:
+        """Load the highscores from the file.
+
+        If the file is not valid JSON, cannot be read or does not
+        contain a list, it is treated as malformed (see
+        _malformed_highscore). Entries that are not dictionaries are
+        ignored.
+
+        Returns:
+            The entries sorted from the highest to the lowest score. The
+            list is empty if the file does not exist or is malformed.
+        """
+
         filename = self.config.highscore_filename
         if not os.path.exists(filename):
             return []
@@ -30,6 +59,15 @@ class HighscoreStorage:
 
     @staticmethod
     def _malformed_highscore(filename: str) -> None:
+        """Rename a malformed highscores file to malformed_highscore.txt.
+
+        It prints a warning. If the file cannot be renamed, it prints a
+        different warning instead of raising.
+
+        Args:
+            filename: Path of the malformed file.
+        """
+
         backup = "malformed_highscore.txt"
         try:
             os.replace(filename, backup)
@@ -39,6 +77,18 @@ class HighscoreStorage:
             print(f"Warning: could not back up '{filename}': {e}")
 
     def find_entry(self, name: str) -> dict[str, Any] | None:
+        """Find the entry of a player.
+
+        The names are compared without the spaces at the start and the
+        end.
+
+        Args:
+            name: Name of the player.
+
+        Returns:
+            The entry, or None if the name is not in the highscores.
+        """
+
         name_clean = name.strip()
 
         for entry in self.load_scores():
@@ -51,6 +101,17 @@ class HighscoreStorage:
 
     @staticmethod
     def get_score(entry: dict[str, Any]) -> int:
+        """Return the score of an entry as an integer.
+
+        A missing or invalid score counts as 0.
+
+        Args:
+            entry: Entry with the keys 'name' and 'score'.
+
+        Returns:
+            The score as an int.
+        """
+
         try:
             val = entry.get("score", 0)
             return int(float(val))
@@ -58,6 +119,22 @@ class HighscoreStorage:
             return 0
 
     def save_highscore(self, player_name: str, final_score: int) -> bool:
+        """Save a score, keeping only the best 10.
+
+        The name is stripped and, if it is empty, PLAYER is used. An
+        entry with the same name is replaced, even if its score was
+        higher. The file is written to a temporary file (the filename
+        plus '.tmp') that then replaces the real one.
+
+        Args:
+            player_name: Name of the player.
+            final_score: Score of the player.
+
+        Returns:
+            True if it was saved, False if there was an error (which is
+            printed).
+        """
+
         filename = self.config.highscore_filename
         name_to_save = player_name.strip()
         if not name_to_save:

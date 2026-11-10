@@ -1,3 +1,5 @@
+"""State of the Pac-Man game: entities, maze, timers and input events."""
+
 import pygame
 import sys
 try:
@@ -13,6 +15,41 @@ from typing import Tuple, Callable
 
 
 class GameState:
+    """Holds the state of the game and the rules to move on the maze.
+
+    It stores the player, the ghosts, the pacgums, the timers and the
+    maze of the current level, and it reads the keyboard events.
+
+    Attributes:
+        KEY_DIRECTIONS: Maps each movement key (arrows and WASD) to its
+            MovingDirection.
+        config: Configuration of the game.
+        current_level: Index of the current level.
+        player: Player of the game.
+        ghosts: Ghosts of the game.
+        pacgums: Normal pacgums that are still in the level.
+        super_pacgums: Super pacgums that are still in the level.
+        entity_factory: Factory used to create the entities.
+        red_ghost: Red ghost, or None if it has not been set.
+        power_up_timer: Time since the power-up started, in
+            milliseconds.
+        POWER_UP_DURATION: Duration of the power-up, in milliseconds.
+        RESPAWN_DELAY: Time an eaten ghost waits to come back, in
+            milliseconds.
+        level_timer: Time spent in the current level, in milliseconds.
+        paused: True if the game is paused.
+        pause_index: Index of the selected option of the pause menu.
+        pause_options: Texts of the options of the pause menu.
+        back_to_menu: True if the player chose to go back to the main
+            menu.
+        running: True while the game is running.
+        maze_width: Number of columns of the maze.
+        maze_height: Number of rows of the maze.
+        maze: Maze of the current level. It is created by
+            initializeMaze, so it does not exist before a level is
+            loaded.
+    """
+
     KEY_DIRECTIONS = {
         pygame.K_UP: MovingDirection.MOVING_UP,
         pygame.K_w: MovingDirection.MOVING_UP,
@@ -24,7 +61,13 @@ class GameState:
         pygame.K_d: MovingDirection.MOVING_RIGHT,
     }
 
-    def __init__(self, config: GameConfigModel):
+    def __init__(self, config: GameConfigModel) -> None:
+        """Initialize pygame and create an empty game state.
+
+        Args:
+            config: Configuration of the game.
+        """
+
         pygame.init()
         self.config = config
         self.current_level = 0
@@ -49,18 +92,53 @@ class GameState:
         self.maze_height = 0
 
     def get_actual_level_size(self) -> tuple[int, int]:
+        """Return the size of the current level.
+
+        Returns:
+            A tuple (width, height) in cells.
+        """
+
         width = self.config.levels[self.current_level].width
         height = self.config.levels[self.current_level].height
         return (width, height)
 
     def get_maze_cell(self, x: int, y: int) -> int:
+        """Return the value of a cell of the maze.
+
+        Args:
+            x: Column of the cell.
+            y: Row of the cell.
+
+        Returns:
+            The value of the cell, which encodes its walls.
+        """
+
         return int(self.maze.maze[y][x])
 
     def get_remaining_time(self) -> int:
+        """Return the time left to finish the level.
+
+        Returns:
+            The remaining time in seconds, never below 0.
+        """
+
         return max(0, self.config.level_max_time
                    - self.level_timer // 1000)
 
     def initializeMaze(self, width: int, height: int) -> None:
+        """Generate a new maze and store its size.
+
+        The configured seed is used in the first level, and 0 in the
+        rest. The program exits if the maze cannot be generated.
+
+        Args:
+            width: Number of columns of the maze.
+            height: Number of rows of the maze.
+
+        Raises:
+            SystemExit: If the maze generator fails.
+        """
+
         self.maze_width = width
         self.maze_height = height
         seed = self.config.seed if self.current_level == 0 else 0
@@ -74,6 +152,15 @@ class GameState:
             sys.exit(1)
 
     def load_level(self, level_index: int) -> Tuple[int, int]:
+        """Make a level the current one and generate its maze.
+
+        Args:
+            level_index: Index of the level in the configuration.
+
+        Returns:
+            A tuple (width, height) with the size of the level.
+        """
+
         self.current_level = level_index
         width = self.config.levels[self.current_level].width
         height = self.config.levels[self.current_level].height
@@ -81,6 +168,16 @@ class GameState:
         return (width, height)
 
     def next_level(self) -> Tuple[int, int] | None:
+        """Move to the next level.
+
+        The power-up and the level timers are reset. If there are no
+        more levels, the game stops running.
+
+        Returns:
+            A tuple (width, height) with the size of the new level, or
+            None if there are no more levels.
+        """
+
         if self.current_level + 1 >= len(self.config.levels):
             self.running = False
             return None
@@ -90,11 +187,20 @@ class GameState:
         return self.load_level(self.current_level + 1)
 
     def scare_ghosts(self) -> None:
+        """Make every ghost that is not eaten scared."""
+
         for ghost in self.ghosts:
             if not ghost.is_eaten():
                 ghost.scared = True
 
     def lose_life_and_reset(self) -> None:
+        """Take a life from the player and send the ghosts back.
+
+        The player is powered down and the power-up timer is reset. If
+        the player has no lives left, the game stops running. Otherwise,
+        every ghost respawns and stops being scared or eaten.
+        """
+
         self.player.lose_life()
         self.player.power_down()
         self.power_up_timer = 0
@@ -108,6 +214,23 @@ class GameState:
 
     def bind_events(self, handle_pause: Callable[[int], None]
                     ) -> dict[str, bool]:
+        """Read the pygame events and apply them to the game.
+
+        Keys: ESC or P pauses the game, the arrows and WASD set the
+        desired direction of the player, I toggles invincibility, V adds
+        a life, B toggles the speed boost, L asks to skip the level and
+        F toggles the ghost freeze. While the game is paused, the keys
+        are given to handle_pause.
+
+        Args:
+            handle_pause: Function that receives the key pressed while
+                the game is paused.
+
+        Returns:
+            A dictionary with the keys 'extra_life' and 'level_skip',
+            which are True if the animation of that event is needed.
+        """
+
         result: dict[str, bool] = {'extra_life': False,
                                    'level_skip': False}
         for event in pygame.event.get():
@@ -136,16 +259,43 @@ class GameState:
         return result
 
     def set_red_ghost(self, red_ghost: Ghost) -> None:
+        """Store the red ghost.
+
+        Nothing happens if the ghost is not red.
+
+        Args:
+            red_ghost: Ghost to store.
+        """
+
         if (red_ghost.color == Ghost.GhostColor.RED):
             self.red_ghost = red_ghost
 
     def get_red_ghost_pos(self) -> tuple[int, int] | None:
+        """Return the cell of the red ghost.
+
+        Returns:
+            A tuple (x, y), or None if the red ghost has not been set.
+        """
+
         if self.red_ghost is None:
             return None
         return self.red_ghost.get_coordinates()
 
     def can_move(self, origin: tuple[int, int],
                  target: tuple[int, int]) -> bool:
+        """Tell whether an entity can go from a cell to a next one.
+
+        The move is not allowed if the target is outside the maze, if it
+        is not next to the origin, or if there is a wall between them.
+
+        Args:
+            origin: Cell as (x, y) where the entity is.
+            target: Cell as (x, y) where the entity wants to go.
+
+        Returns:
+            True if the move is allowed, False otherwise.
+        """
+
         x_target, y_target = target
         if (x_target < 0 or x_target >= self.maze_width or y_target < 0
                 or y_target >= self.maze_height):
@@ -167,6 +317,15 @@ class GameState:
         return bool((actual_cell & wall) == 0)
 
     def available_cell(self, target: tuple[int, int]) -> bool:
+        """Tell whether a cell is inside the maze.
+
+        Args:
+            target: Cell as (x, y) to check.
+
+        Returns:
+            True if the cell is inside the maze, False otherwise.
+        """
+
         x_target, y_target = target
         if (x_target < 0 or x_target >= self.maze_width or y_target < 0
                 or y_target >= self.maze_height):
@@ -174,6 +333,18 @@ class GameState:
         return True
 
     def is_walkable(self, cell: tuple[int, int]) -> bool:
+        """Tell whether a cell can be stepped on.
+
+        A cell can be stepped on if it is inside the maze and it is not
+        closed by walls on its four sides (value 15).
+
+        Args:
+            cell: Cell as (x, y) to check.
+
+        Returns:
+            True if the cell can be stepped on, False otherwise.
+        """
+
         x, y = cell
         if not (0 <= x < self.maze_width and 0 <= y < self.maze_height):
             return False

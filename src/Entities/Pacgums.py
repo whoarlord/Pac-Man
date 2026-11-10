@@ -1,29 +1,29 @@
-"""Pac-gums of the Pac-Man game and helpers to place them."""
+"""pacgums of the Pac-Man game and helpers to place them."""
 
 from typing import Callable
 import random
 
 
 class Pacgum:
-    """Pac-Man pac-gum: stores its position and whether it is a super one.
+    """Pac-Man pacgum: stores its position and whether it is a super one.
 
     The position is stored as (x, y), where x is the column and y is
     the row. This class does not know the map: placing and removing
-    pac-gums is done outside.
+    pacgums is done outside.
 
     Attributes:
-        x: Column of the pac-gum.
-        y: Row of the pac-gum.
-        is_super: True for a super pac-gum, False for a normal one.
+        x: Column of the pacgum.
+        y: Row of the pacgum.
+        is_super: True for a super pacgum, False for a normal one.
     """
 
     def __init__(self, x: int, y: int, is_super: bool) -> None:
-        """Create a pac-gum at position (x, y).
+        """Create a pacgum at position (x, y).
 
         Args:
-            x: Column of the pac-gum.
-            y: Row of the pac-gum.
-            is_super: True for a super pac-gum and False for a normal
+            x: Column of the pacgum.
+            y: Row of the pacgum.
+            is_super: True for a super pacgum and False for a normal
                 one.
         """
 

@@ -1,3 +1,5 @@
+"""End screens of the Pac-Man game, where the player saves the score."""
+
 import sys
 import pygame
 from src.Config.ConfigParser import GameConfigModel
@@ -5,8 +7,40 @@ from src.Ui.HighscoreStorage import HighscoreStorage
 
 
 class EndScreenBase:
+    """Base of the end screens: asks for a name and saves the score.
+
+    The player types a name of up to 10 characters (letters, digits and
+    spaces) and presses Enter. If the name already exists in the
+    highscores, it asks for confirmation before overwriting it. If the
+    score cannot be saved, it shows a warning and the next Enter
+    closes the screen.
+
+    Attributes:
+        screen: Surface where the screen is drawn.
+        config: Configuration of the game.
+        final_score: Score of the player.
+        player_name: Name typed so far.
+        font_title: Font of the title.
+        font_options: Font of the score and the name.
+        font_text: Font of the rest of the texts.
+        running: False when the screen has to close.
+        confirm_overwrite: True while waiting for the confirmation to
+            overwrite an existing name.
+        existing_score: Score of the existing entry with the same name.
+        save_failed: True if saving the score failed.
+        storage: Storage used to read and save the highscores.
+    """
+
     def __init__(self, screen: pygame.Surface, config: GameConfigModel,
                  score: int) -> None:
+        """Create the screen.
+
+        Args:
+            screen: Surface where the screen is drawn.
+            config: Configuration of the game.
+            score: Score of the player.
+        """
+
         self.screen = screen
         self.config = config
         self.final_score = score
@@ -21,6 +55,21 @@ class EndScreenBase:
         self.storage = HighscoreStorage(self.config)
 
     def handle_events(self) -> None:
+        """Read the pygame events of the screen.
+
+        Closing the window quits pygame and exits the program. Enter
+        saves the score with the name typed (PLAYER if it is empty). If
+        that name already exists, the first Enter only asks for
+        confirmation. If saving fails, save_failed is set and the next
+        Enter closes the screen. Backspace deletes the last character.
+        Any other key adds its character if it is a letter, a digit or
+        a space and the name has less than 10 characters. Editing the
+        name cancels the confirmation.
+
+        Raises:
+            SystemExit: If the window is closed.
+        """
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -48,6 +97,13 @@ class EndScreenBase:
                         self.confirm_overwrite = False
 
     def _draw_overwrite_warning(self) -> None:
+        """Draw in red the warning about the score, if there is one.
+
+        It shows a message if the save failed, or the overwrite
+        confirmation with the existing score. Otherwise it draws
+        nothing.
+        """
+
         width = self.screen.get_width()
         if self.save_failed:
             lines = ["The score could not be saved (see the terminal).",
@@ -71,7 +127,16 @@ class EndScreenBase:
 
 
 class GameOverScreen(EndScreenBase):
+    """End screen shown when the player loses the game."""
+
     def draw(self) -> None:
+        """Draw the screen and update the display.
+
+        It shows the title, the final score, the name typed (an
+        underscore if empty), the warning if there is one and the
+        instructions.
+        """
+
         self.screen.fill((0, 0, 0))
         width = self.screen.get_width()
 
@@ -103,6 +168,12 @@ class GameOverScreen(EndScreenBase):
         pygame.display.flip()
 
     def run(self) -> bool:
+        """Run the screen until the player saves the score.
+
+        Returns:
+            Always True.
+        """
+
         clock = pygame.time.Clock()
         while self.running:
             self.handle_events()
@@ -112,7 +183,16 @@ class GameOverScreen(EndScreenBase):
 
 
 class VictoryScreen(EndScreenBase):
+    """End screen shown when the player wins the game."""
+
     def draw(self) -> None:
+        """Draw the screen and update the display.
+
+        It shows the title, the final score, the name typed (an
+        underscore if empty), the warning if there is one and the
+        instructions.
+        """
+
         self.screen.fill((0, 0, 0))
         width = self.screen.get_width()
 
@@ -144,6 +224,12 @@ class VictoryScreen(EndScreenBase):
         pygame.display.flip()
 
     def run(self) -> bool:
+        """Run the screen until the player saves the score.
+
+        Returns:
+            Always True.
+        """
+
         clock = pygame.time.Clock()
         while self.running:
             self.handle_events()

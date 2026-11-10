@@ -1,3 +1,5 @@
+"""Rules of the Pac-Man game: eating, collisions and timers."""
+
 from src.Game.GameState import GameState
 from src.Ui.MazeGrid import MazeGrid
 from src.Game.LevelLoader import LevelLoader
@@ -5,13 +7,38 @@ from src.Entities.MovementEntity import MovingDirection
 
 
 class GameRules:
+    """Applies the rules of the game on the game state.
+
+    Attributes:
+        game_state: State of the game.
+        maze_grid: Grid used to convert cells into pixels.
+        level_loader: Loader used to put the player back in the center.
+    """
+
     def __init__(self, game_state: GameState, maze_grid: MazeGrid,
                  level_loader: LevelLoader) -> None:
+        """Create the rules.
+
+        Args:
+            game_state: State of the game.
+            maze_grid: Grid used to convert cells into pixels.
+            level_loader: Loader used to put the player back in the
+                center.
+        """
+
         self.game_state = game_state
         self.maze_grid = maze_grid
         self.level_loader = level_loader
 
     def eat_pacgums(self) -> None:
+        """Eat the pacgums that are in the cell of the player.
+
+        A normal pacgum is removed and adds points_per_pacgum to the
+        score. A super pacgum is removed, adds points_per_super_pacgum,
+        powers up the player, scares the ghosts and resets
+        power_up_timer.
+        """
+
         for pacgum in list(self.game_state.pacgums):
             if (pacgum.x == self.game_state.player.x and
                     pacgum.y == self.game_state.player.y):
@@ -27,6 +54,13 @@ class GameRules:
                 self.game_state.power_up_timer = 0
 
     def lose_life_and_reset(self) -> None:
+        """Take a life from the player and send the entities back.
+
+        It calls GameState.lose_life_and_reset, puts the player back in
+        the center of the maze and, for each ghost, updates its pixel
+        position to its respawn cell and stops it.
+        """
+
         self.game_state.lose_life_and_reset()
         self.level_loader.reset_player_position()
         for ghost in self.game_state.ghosts:
@@ -35,6 +69,21 @@ class GameRules:
             ghost.set_current_direction(MovingDirection.NOT_MOVING)
 
     def check_collisions(self) -> None:
+        """Check the collisions between the player and the ghosts.
+
+        The collision is checked with the pixel positions. Each entity
+        is a square of the size of a cell, reduced on every side by a
+        tolerance of min(6, cell_size / 4) pixels. Eaten ghosts are
+        ignored.
+
+        If the player touches a scared ghost, the ghost stops being
+        scared, waits RESPAWN_DELAY milliseconds, goes back to its spawn
+        cell and stops, and the player gets points_per_ghost. If the
+        ghost is not scared and the player is not invincible, it calls
+        lose_life_and_reset, prints the remaining lives and the rest of
+        the ghosts are not checked in that call.
+        """
+
         width_c, height_c = self.maze_grid.get_cell_size()
 
         tolerance = min(6, int(min(width_c, height_c) / 4))
@@ -72,6 +121,20 @@ class GameRules:
                     break
 
     def update_timers(self, dt: int) -> None:
+        """Update the timers of the game.
+
+        While the player is powered up, power_up_timer grows. When it
+        reaches POWER_UP_DURATION, the player powers down, the ghosts
+        stop being scared and the timer is reset. The respawn_timer of
+        the eaten ghosts goes down to 0. level_timer grows, and when it
+        reaches level_max_time seconds, it prints a message, sets the
+        lives of the player to 0, stops the game and resets
+        level_timer.
+
+        Args:
+            dt: Milliseconds since the last frame.
+        """
+
         player = self.game_state.player
         if player.is_powered_up:
             self.game_state.power_up_timer += dt

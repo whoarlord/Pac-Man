@@ -10,9 +10,9 @@ class Player(MovementEntity):
 
     Attributes:
         score: Current score of the player.
-        is_powered_up: True while the super pac-gum effect is active.
-        points_per_pacgum: Points awarded for a normal pac-gum.
-        points_per_super_pacgum: Points awarded for a super pac-gum.
+        is_powered_up: True while the super pacgum effect is active.
+        points_per_pacgum: Points awarded for a normal pacgum.
+        points_per_super_pacgum: Points awarded for a super pacgum.
         points_per_ghost: Points awarded for eating a ghost.
         lives: Number of lives left.
         pacman_state: State used to choose the player animation frame.
@@ -38,9 +38,9 @@ class Player(MovementEntity):
             image: Surface used to draw the player.
             can_move: Function that receives the current cell and the
                 target cell, and returns True if the move is allowed.
-            points_per_pacgum: Points awarded for a normal pac-gum.
+            points_per_pacgum: Points awarded for a normal pacgum.
             points_per_super_pacgum: Points awarded for a super
-                pac-gum.
+                pacgum.
             points_per_ghost: Points awarded for eating a ghost.
             lives: Number of lives the player starts with.
         """
@@ -60,7 +60,7 @@ class Player(MovementEntity):
     def add_pacgum_points(self) -> None:
         """Add points_per_pacgum to the score.
 
-        It only updates the score: removing the pac-gum from the map
+        It only updates the score: removing the pacgum from the map
         is not done here.
         """
 
@@ -80,15 +80,16 @@ class Player(MovementEntity):
         self.score = self.points_per_ghost + self.score
 
     def power_up(self) -> None:
-        """Set is_powered_up to True (the player ate a super pac-gum).
+        """Set is_powered_up to True (the player ate a super pacgum).
 
-        While it is True, ghosts should run away instead of chasing.
+        While it is True, the ghosts are scared and go home instead
+            of chasing.
         """
 
         self.is_powered_up = True
 
     def power_down(self) -> None:
-        """Set is_powered_up to False (the super pac-gum effect ended).
+        """Set is_powered_up to False (the super pacgum effect ended).
 
         Calling it when the player is already powered down changes nothing.
         """
@@ -101,10 +102,12 @@ class Player(MovementEntity):
         self.lives = max(0, self.lives - 1)
 
     def update_direction(self) -> None:
-        """Move the player and update current_direction.
+        """Move the entity and update current_direction.
 
-        It first tries desired_direction. If there is none, it keeps
-        moving in current_direction. If neither is possible,
+        If desired_direction is not NOT_MOVING, it tries to move in that
+        direction and current_direction becomes desired_direction, even
+        if a wall blocked the move. If desired_direction is NOT_MOVING,
+        it tries to move one cell in current_direction and then
         current_direction becomes NOT_MOVING.
         """
 

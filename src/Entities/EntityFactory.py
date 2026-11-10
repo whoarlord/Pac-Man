@@ -11,9 +11,16 @@ class EntityFactory:
     """Factory that creates the Pac-Man entities (player, ghosts and
     pacgums).
 
-    It does not store anything: the starting positions are given to
-    initialize_entity, and all creation goes through the _create_...
-    methods.
+    It only stores the can_move and available_cell functions, which it
+    gives to the entities it creates. create_player needs can_move to be
+    set and create_ghost needs both, so call set_can_move and
+    set_available_cell first.
+
+    Attributes:
+        can_move: Function that tells whether a move is allowed. Set by
+            set_can_move.
+        available_cell: Function that tells whether a cell is inside
+            the map. Set by set_available_cell.
     """
 
     def create_player(self, coordinates: Tuple[int, int],
@@ -94,11 +101,11 @@ class EntityFactory:
 
     def set_available_cell(self, available_cell: Callable[
             [tuple[int, int]], bool]) -> None:
-        """Set the function used to check if a cell can be stepped on.
+        """Set the function used to check if a cell is inside the map.
 
         Args:
             available_cell: Function that receives a cell and returns
-                True if it is not a wall and is inside the map.
+                True if it is inside the map.
         """
 
         self.available_cell = available_cell

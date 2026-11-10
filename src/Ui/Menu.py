@@ -1,3 +1,5 @@
+"""Main menu of the Pac-Man game: options, instructions and highscores."""
+
 import sys
 import pygame
 from typing import Any
@@ -6,7 +8,31 @@ from src.Ui.HighscoreStorage import HighscoreStorage
 
 
 class MainMenu:
-    def __init__(self, screen: pygame.Surface, config: GameConfigModel):
+    """Main menu of the game, with its highscores and instructions.
+
+    Attributes:
+        screen: Surface where the menu is drawn.
+        config: Configuration of the game.
+        font_title: Font of the titles.
+        font_options: Font of the options.
+        font_text: Font of the rest of the texts.
+        options: Texts of the options of the main menu.
+        selected_index: Index of the selected option.
+        state: Screen being shown: 'MAIN', 'HIGHSCORES' or
+            'INSTRUCTIONS'.
+        scores: Highscores loaded when the highscores screen is opened.
+        storage: Storage used to read the highscores.
+    """
+
+    def __init__(self, screen: pygame.Surface, config: GameConfigModel
+                 ) -> None:
+        """Create the menu.
+
+        Args:
+            screen: Surface where the menu is drawn.
+            config: Configuration of the game.
+        """
+
         self.screen = screen
         self.config = config
         self.font_title = pygame.font.Font(None, 80)
@@ -20,6 +46,11 @@ class MainMenu:
         self.storage = HighscoreStorage(self.config)
 
     def _draw_main_menu(self) -> None:
+        """Draw the title and the options.
+
+        The selected option is white and the others are gray.
+        """
+
         screen_width = self.screen.get_width()
         text_surface = self.font_title.render("PAC-MAN", True, (255, 238, 0))
         x_centre = (screen_width - text_surface.get_width()) // 2
@@ -39,6 +70,8 @@ class MainMenu:
             self.screen.blit(option_surface, (x_option, y_option))
 
     def _draw_instructions(self) -> None:
+        """Draw the instructions: controls, rules and cheats."""
+
         screen_width = self.screen.get_width()
         title_surface = self.font_title.render("GAME INSTRUCTIONS",
                                                True, (255, 100, 255))
@@ -51,8 +84,8 @@ class MainMenu:
             "• ESC or P: pause / resume the game.",
             "",
             "RULES:",
-            "• Eat all the Pac-gums and Super Pac-gums to clear the level.",
-            "• A Super Pac-gum makes ghosts edible for 7 seconds.",
+            "• Eat all the pacgums and Super pacgums to clear the level.",
+            "• A Super pacgum makes ghosts edible for 7 seconds.",
             "• An eaten ghost returns to its corner and comes back after 5 s.",
             "• Touching a ghost that is not edible costs a life.",
             "• If the level timer reaches 0, you lose the game.",
@@ -73,6 +106,13 @@ class MainMenu:
         self.screen.blit(back_surface, (x_back, 850))
 
     def _draw_highscores(self) -> None:
+        """Draw the top 10 highscores of self.scores.
+
+        Each line has the rank, the name (first 10 characters) and the
+        score. Entries that are not dictionaries are skipped. If there
+        are no scores, it draws a message.
+        """
+
         screen_width = self.screen.get_width()
         title_surface = self.font_title.render("TOP 10 HIGHSCORES",
                                                True, (0, 255, 255))
@@ -120,6 +160,19 @@ class MainMenu:
         self.screen.blit(back_surface, (x_back, 850))
 
     def _execute_option(self) -> str | None:
+        """Run the selected option.
+
+        View Highscores loads the scores and changes the state, and
+        Instructions changes the state. Exit quits pygame and exits the
+        program.
+
+        Returns:
+            'START_GAME' if Start Game is selected, None otherwise.
+
+        Raises:
+            SystemExit: If Exit is selected.
+        """
+
         selected = self.options[self.selected_index]
         if selected == "Start Game":
             return "START_GAME"
@@ -134,6 +187,8 @@ class MainMenu:
         return None
 
     def draw(self) -> None:
+        """Draw the screen of the current state and update the display."""
+
         self.screen.fill((0, 0, 0))
 
         if self.state == "MAIN":
@@ -146,6 +201,19 @@ class MainMenu:
         pygame.display.flip()
 
     def handle_events(self) -> str | None:
+        """Read the pygame events of the menu.
+
+        Closing the window quits pygame and exits the program. ESC goes
+        back to the main screen. In the main screen, Up/W and Down/S
+        change the selected option and Enter runs it.
+
+        Returns:
+            'START_GAME' if the player chose to start, None otherwise.
+
+        Raises:
+            SystemExit: If the window is closed.
+        """
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -165,6 +233,8 @@ class MainMenu:
         return None
 
     def run(self) -> None:
+        """Show the menu until the player chooses Start Game."""
+
         clock = pygame.time.Clock()
 
         while True:

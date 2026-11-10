@@ -8,13 +8,13 @@ from pygame import Surface
 
 
 class Ghost(MovementEntity):
-    """Pac-Man ghost: chases the player or runs away from it.
+    """Pac-Man ghost: chases the player or goes back home when scared.
 
-    Which of the two to use depends on player.is_powered_up, and that
-    is checked outside this class.
-    The ghost does not know the map: it receives an is_walkable function
-    that says whether a cell can be stepped on (not a wall and inside
-    the map). Distances to the player are computed with BFS.
+    Which of the two to use depends on is_scared, and that is checked
+    outside this class.
+    The ghost does not know the map: it receives a can_move function to
+    check the walls and an available_cell function to check that a cell
+    is inside the map. Distances are computed with BFS.
 
     Attributes:
         MAX_WAIT_TICKS: Ticks a ghost waits when its best cell is
@@ -22,14 +22,15 @@ class Ghost(MovementEntity):
         CLYDE_DISTANCE: Distance under which the yellow ghost retreats.
         CLYDE_MARGIN: Extra distance the yellow ghost must gain before
             it stops retreating.
-        available_cell: Function that tells whether a cell can be
-            stepped on.
+        available_cell: Function that tells whether a cell is
+            inside the map.
         color: Color of the ghost, which decides how it chases.
         spawn_x: Column where the ghost respawns.
         spawn_y: Row where the ghost respawns.
         respawn_timer: Remaining time before the ghost comes back. It
             is greater than 0 while the ghost is eaten.
-        scared: True if the ghost is running away from the player.
+        scared: True if the ghost is scared and goes back home instead
+            of chasing the player.
         home_x: Column of the ghost's home cell.
         home_y: Row of the ghost's home cell.
         wait_ticks: Ticks the ghost has been waiting for a blocked cell.
@@ -75,7 +76,7 @@ class Ghost(MovementEntity):
                 target cell, and returns True if the move is allowed.
             color: Color of the ghost.
             available_cell: Function that receives a cell and returns
-                True if it can be stepped on.
+                True if it is inside the map.
         """
 
         super().__init__(x, y, x_pixel, y_pixel, image, can_move)
@@ -297,6 +298,7 @@ class Ghost(MovementEntity):
 
     def _move_to(self, cell: tuple[int, int]) -> None:
         """Move the ghost to cell, which must be one of its 4 neighbours.
+
         If cell is not next to the ghost, nothing happens. It also
         updates current_direction.
 
@@ -323,7 +325,7 @@ class Ghost(MovementEntity):
         """Return the target cell of the pink ghost.
 
         It aims at a cell ahead of the player, trying 4 cells first and
-        then fewer, until it finds one that can be stepped on.
+        then fewer, until it finds one inside the map.
 
         Args:
             player_pos: Cell as (x, y) of the player.
@@ -361,8 +363,8 @@ class Ghost(MovementEntity):
             player_direction: Direction the player is moving in.
 
         Returns:
-            The target cell, or player_pos if that cell cannot be
-            stepped on.
+            The target cell, or player_pos if that cell is
+            outside the map.
         """
 
         target_cell = None

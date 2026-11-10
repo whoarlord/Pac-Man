@@ -1,3 +1,5 @@
+"""Main loop of the Pac-Man game."""
+
 import pygame
 from src.Game.GameState import GameState
 from src.Ui.MazeRenderer import MazeRenderer
@@ -8,9 +10,29 @@ from src.Entities.MovementEntity import MovingDirection
 
 
 class GameController:
+    """Runs the game loop and connects the state, the rules and the UI.
+
+    Attributes:
+        game_state: State of the game.
+        renderer: Renderer used to draw the maze and the menus.
+        level_loader: Loader used to set up the levels.
+        rules: Rules of the game, such as collisions and timers.
+        movement_controller: Controller that moves the entities.
+    """
+
     def __init__(self, game_state: GameState, renderer: MazeRenderer,
                  level_loader: LevelLoader, rules: GameRules,
                  movement_controller: MovementController) -> None:
+        """Create the controller.
+
+        Args:
+            game_state: State of the game.
+            renderer: Renderer used to draw the maze and the menus.
+            level_loader: Loader used to set up the levels.
+            rules: Rules of the game, such as collisions and timers.
+            movement_controller: Controller that moves the entities.
+        """
+
         self.game_state = game_state
         self.renderer = renderer
         self.level_loader = level_loader
@@ -18,6 +40,17 @@ class GameController:
         self.movement_controller = movement_controller
 
     def handle_pause_key(self, key: int) -> None:
+        """Apply a key pressed while the game is paused.
+
+        Up/W and Down/S change the selected option of the pause menu.
+        ESC or P resume the game. Enter resumes it too and, if the
+        second option is selected, it also goes back to the menu and
+        stops the game.
+
+        Args:
+            key: Pygame key code of the key pressed.
+        """
+
         gs = self.game_state
         if key in (pygame.K_UP, pygame.K_w):
             gs.pause_index = (gs.pause_index - 1) % len(gs.pause_options)
@@ -32,6 +65,16 @@ class GameController:
                 gs.running = False
 
     def handle_animations(self, animations: dict[str, bool]) -> None:
+        """Play the animations asked by the events of the frame.
+
+        The 'level_skip' animation also removes all the pacgums, so the
+        level ends.
+
+        Args:
+            animations: Dictionary with the keys 'extra_life' and
+                'level_skip', as returned by GameState.bind_events.
+        """
+
         if (animations.get('extra_life')):
             self.renderer.extra_life_animation()
         if (animations.get('level_skip')):
@@ -40,6 +83,15 @@ class GameController:
             self.game_state.super_pacgums.clear()
 
     def run(self) -> None:
+        """Run the game loop until the game stops running.
+
+        In each frame it reads the events and, if the game is paused,
+        draws the pause menu. Otherwise it checks the collisions, plays
+        the animations, updates the timers and loads the next level when
+        no pacgums are left. The player and the ghosts move every
+        movement_interval milliseconds.
+        """
+
         clock = pygame.time.Clock()
         movement_interval = 35
         time_counter = 0
