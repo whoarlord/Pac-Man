@@ -2,6 +2,7 @@ import os
 import pygame
 from typing import Tuple
 from src.Entities.MovementEntity import MovingDirection
+from src.Pygame.MLXAdapter import MLXAdapter
 
 
 class EntitiesAdapter:
@@ -15,6 +16,7 @@ class EntitiesAdapter:
         self.pacman_state = 5
         self.calls_counter: int = 0
         self.cache: dict[str, pygame.Surface] = {}
+        self.mlx_adapter = MLXAdapter()
 
     def _all_image_routes(self) -> list[str]:
         names = [
@@ -56,7 +58,7 @@ class EntitiesAdapter:
             img = pygame.image.load(route).convert_alpha()
         except pygame.error as e:
             raise pygame.error(f"Cannot load image '{route}': {e}") from e
-        scaled = pygame.transform.scale(img, self.entity_dimensions)
+        scaled = self.mlx_adapter.scale_image(img, self.entity_dimensions)
         self.cache[route] = scaled
         return scaled
 
@@ -68,7 +70,7 @@ class EntitiesAdapter:
             img = pygame.image.load(route).convert_alpha()
         except pygame.error as e:
             raise pygame.error(f"Cannot load image '{route}': {e}") from e
-        scaled = pygame.transform.scale(img, self.ICON_SIZE)
+        scaled = self.mlx_adapter.scale_image(img, self.ICON_SIZE)
         self.cache[key] = scaled
         return scaled
 

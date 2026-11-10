@@ -1,6 +1,5 @@
-from src.Pygame import MazeGrid, MazeUi, EntitiesAdapter
-from pygame import (Surface, draw, display, font, time,
-                    Rect, transform)
+from src.Pygame import MazeGrid, MazeUi, EntitiesAdapter, MLXAdapter
+from pygame import (Surface, draw, display, font, time)
 from typing import Tuple
 from src.Entities import (MovementEntity, Ghost)
 
@@ -8,13 +7,17 @@ from src.Entities import (MovementEntity, Ghost)
 class MazeRenderer:
     def __init__(self, maze_grid: MazeGrid,
                  game_state: MazeUi, entity_adapter: EntitiesAdapter):
+        self.mlxadapter = MLXAdapter()
         self.maze_grid = maze_grid
         self.game_state = game_state
         self.entity_adapter = entity_adapter
         self.screen: Surface = display.set_mode(
             self.maze_grid.get_window_size())
-        self.screen.fill("black")
+        # self.screen.fill('black')
+        self.background = Surface(self.maze_grid.get_window_size())
+        self.mlxadapter.set_color(self.background, 'black')
         self.initialize_veil()
+        self.initialize_fire_efect()
         self.font = font.Font(None, 40)
         self.title_font = font.Font(None, 80)
         self.life_anim_active = False
@@ -26,8 +29,18 @@ class MazeRenderer:
 
     def initialize_veil(self) -> None:
         self.pause_veil = Surface(self.maze_grid.get_window_size())
-        self.pause_veil.set_alpha(150)
-        self.pause_veil.fill((0, 0, 0))
+        self.mlxadapter.set_color(self.pause_veil, 'black')
+        self.mlxadapter.set_alpha(self.pause_veil, 150)
+
+    def initialize_fire_efect(self) -> None:
+        self.fire_efect = Surface(self.maze_grid.get_window_size())
+        self.mlxadapter.set_color(self.fire_efect, 'orange')
+        self.mlxadapter.set_alpha(self.fire_efect, 120)
+
+    """ def place_player_center(self, player: Surface) -> None:
+        x, y = self.maze_grid.calculate_center()
+        pixels = self.maze_grid.calculate_pixels_tuple((x, y))
+        self.place_element(player, pixels) """
 
     def place_entity(self, player: MovementEntity) -> None:
         pixels = player.get_pixels()
@@ -108,7 +121,7 @@ class MazeRenderer:
             self.screen.blit(img_ghost, (current_x, margin_y))
 
     def draw_map(self, dt: int) -> None:
-        self.screen.fill("black")
+        self.screen.blit(self.background, (0, 0))
         self.make_maze(self.maze_grid.width, self.maze_grid.height)
         self.draw_pacgums()
         self.place_entity(self.game_state.player)
@@ -119,60 +132,9 @@ class MazeRenderer:
             self.place_entity(ghost)
         self.draw_hud()
         self.draw_icons()
-        self.draw_life_extra_animation(dt)
-
-    def draw_life_extra_animation(self, dt: int) -> None:
-        if not self.life_anim_active or not self.life_anim_image:
-            return
-        self.life_anim_time += dt
-        if self.life_anim_time >= self.life_anim_duration:
-            self.life_anim_active = False
-            return
-        progress = self.life_anim_time / self.life_anim_duration
-        center_x, center_y = self.maze_grid.calculate_center_pixels()
-
-        if progress <= 0.6:
-            phase_prog = progress / 0.6
-            scale_factor = 0.1 + (5.9 * phase_prog)
-            orig_w, orig_h = self.life_anim_image.get_size()
-            new_w = int(orig_w * scale_factor)
-            new_h = int(orig_h * scale_factor)
-            scaled_img = transform.scale(
-                self.life_anim_image, (new_w, new_h))
-            rect = scaled_img.get_rect(center=(center_x, center_y))
-            self.screen.blit(scaled_img, rect.topleft)
-        else:
-            phase_prog = (progress - 0.6) / 0.4
-            orig_w, orig_h = self.life_anim_image.get_size()
-            base_w = int(orig_w * 6.0)
-            base_h = int(orig_h * 6.0)
-            offset = int(350 * phase_prog)
-            alpha = max(0, int(255 * (1.0 - phase_prog)))
-            base_img = transform.scale(self.life_anim_image,
-                                       (base_w, base_h))
-            w_half, h_half = base_w // 2, base_h // 2
-            quads = [
-                (base_img.subsurface(Rect(0, 0, w_half, h_half)),
-                    -offset, -offset),
-                (base_img.subsurface(Rect(w_half, 0, w_half, h_half)),
-                    offset, -offset),
-                (base_img.subsurface(Rect(0, h_half, w_half, h_half)),
-                    -offset, offset),
-                (base_img.subsurface(Rect(w_half, h_half, w_half,
-                                          h_half)), offset, offset)
-            ]
-            for quad_img, off_x, off_y in quads:
-                quad_surface = quad_img.copy()
-                quad_surface.set_alpha(alpha)
-                q_rect = quad_surface.get_rect()
-                q_rect.center = (center_x + off_x, center_y + off_y)
-                self.screen.blit(quad_surface, q_rect.topleft)
 
     def trigger_level_skip_effect(self) -> None:
-        fire_efect = Surface(self.maze_grid.get_window_size())
-        fire_efect.set_alpha(120)
-        fire_efect.fill((255, 140, 0))
-        self.screen.blit(fire_efect, (0, 0))
+        self.screen.blit(self.fire_efect, (0, 0))
 
         text_font = font.Font(None, 120)
         super_text = text_font.render("FIRE SALE: LEVEL SKIP", True,
@@ -212,13 +174,15 @@ class MazeRenderer:
                 (pacgum.x, pacgum.y))
             rect = self.maze_grid.calculate_rect_for_cell(pixels)
             radius = max(1, int(min(rect.width, rect.height) / 10))
-            draw.circle(self.screen, color, rect.center, radius)
+            self.mlxadapter.draw_circle(self.screen, color, rect.center,
+                                        radius)
         for pacgum in self.game_state.super_pacgums:
             pixels = self.maze_grid.calculate_pixels_tuple(
                 (pacgum.x, pacgum.y))
             rect = self.maze_grid.calculate_rect_for_cell(pixels)
             radius = max(1, int(min(rect.width, rect.height) / 3))
-            draw.circle(self.screen, color, rect.center, radius)
+            self.mlxadapter.draw_circle(self.screen, color, rect.center,
+                                        radius)
 
     def draw_pause_menu(self) -> None:
         self.screen.blit(self.pause_veil, (0, 0))
