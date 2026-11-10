@@ -1,3 +1,11 @@
+"""Main entry point of the Pac-Man game.
+
+This module validates the command-line arguments, loads the configuration
+file and runs the game loop: main menu, gameplay and end screens
+(game over or victory). The loop restarts every time the player chooses
+to go back to the menu from an end screen.
+"""
+
 import sys
 import pygame
 import traceback
@@ -15,6 +23,32 @@ from src.Game.GameController import GameController
 
 
 def main() -> None:
+    """Run the Pac-Man game from the command line.
+
+    Reads the path of a JSON configuration file from ``sys.argv``, parses
+    it and builds every component the game needs (state, grid, renderer,
+    menu, level loader, rules and controllers). It then shows the main
+    menu, runs the game and displays the proper end screen depending on
+    the outcome:
+
+    * Game over screen if the player has no lives left.
+    * Victory screen if every pacgum was eaten on the last level.
+
+    The whole cycle repeats while the player chooses to go back to the
+    menu. Pygame is always shut down before the program exits.
+
+    Raises:
+        SystemExit: Always raised at the end of the function. The exit
+            code is 0 on a normal or user-requested (Ctrl+C) exit, and 1
+            if the arguments are invalid, a file is missing, pygame
+            fails or any unexpected error occurs.
+
+    Note:
+        ``KeyboardInterrupt``, ``FileNotFoundError``, ``pygame.error`` and
+        any other ``Exception`` are caught internally and reported on
+        stdout or stderr, so they never propagate to the caller.
+    """
+
     if len(sys.argv) != 2:
         print("Usage: python3 pac-man.py <config.json>", file=sys.stderr)
         sys.exit(1)
