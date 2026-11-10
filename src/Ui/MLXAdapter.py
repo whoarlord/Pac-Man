@@ -77,20 +77,18 @@ class MLXAdapter:
 
     @staticmethod
     def set_alpha(src: Surface, alpha: int) -> None:
-        dst = src.copy()
-        buf = dst.get_buffer()
+        buf = src.get_buffer()
         data = bytearray(buf.raw)
-        table = bytes(a * alpha // 255 for a in range(256))
-        data[3::4] = data[3::4].translate(table)
+        n = len(data) // 4
+        data[3::4] = bytes([alpha]) * n
         buf.write(bytes(data), 0)
         del buf
 
     def set_color(self, src: Surface, color: str) -> None:
         r, g, b = self.COLORS.get(color, (0, 0, 0))
-        dst = src.copy()
-        buf = dst.get_buffer()
+        buf = src.get_buffer()
         data = bytearray(buf.raw)
-        masks = dst.get_masks()
+        masks = src.get_masks()
         print(masks)
         for value, mask in zip((r, g, b), masks[:3]):
             print(mask.bit_length())

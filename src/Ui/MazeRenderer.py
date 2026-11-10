@@ -1,6 +1,6 @@
 from src.Ui import MazeGrid, EntitiesAdapter, MLXAdapter
 from src.Game import GameState
-from pygame import (Surface, draw, display, font, time)
+from pygame import (Surface, display, font, time, SRCALPHA)
 from typing import Tuple
 from src.Entities import (MovementEntity, Ghost)
 
@@ -30,12 +30,12 @@ class MazeRenderer:
         self.BLINK_INTERVAL = 200
 
     def initialize_veil(self) -> None:
-        self.pause_veil = Surface(self.maze_grid.get_window_size())
+        self.pause_veil = Surface(self.maze_grid.get_window_size(), SRCALPHA)
         self.mlxadapter.set_color(self.pause_veil, 'black')
         self.mlxadapter.set_alpha(self.pause_veil, 150)
 
     def initialize_fire_efect(self) -> None:
-        self.fire_efect = Surface(self.maze_grid.get_window_size())
+        self.fire_efect = Surface(self.maze_grid.get_window_size(), SRCALPHA)
         self.mlxadapter.set_color(self.fire_efect, 'orange')
         self.mlxadapter.set_alpha(self.fire_efect, 120)
 
