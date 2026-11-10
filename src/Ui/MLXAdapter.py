@@ -12,13 +12,23 @@ class MLXAdapter:
         'orange': (255, 140, 0)
     }
 
-    def draw_line(self, surface: Surface, source: Cell,
-                  target: Cell, color: Color) -> None:
+    def draw_line(self, surface: Surface, color: Color,
+                  source: Cell, target: Cell, thick: int = 1):
+        half = thick // 2
+        for x, y in self.get_line(list(source), list(target)):
+            for dy in range(-half, thick - half):
+                for dx in range(-half, thick - half):
+                    surface.set_at((x + dx, y + dy), color)
+
+    def get_line(self, source: list[int],  target: list[int]
+                 ) -> list[list[int]]:
         actual_pixel: list[int] = list(source)
-        while (tuple(actual_pixel) != target):
-            surface.set_at(tuple(actual_pixel), color)
+        result_pixels: list[list[int]] = []
+        while (actual_pixel != target):
+            result_pixels.append(actual_pixel)
             actual_pixel = self.aproximate_coordinates(actual_pixel, target)
-        surface.set_at(actual_pixel, color)
+        result_pixels.append(target)
+        return result_pixels
 
     def draw_cells(self, surface: Surface, cells: list[Cell],
                    color: Color) -> None:
@@ -42,11 +52,12 @@ class MLXAdapter:
         return source
 
     def aproximate_coordinates(self, source: list[int],
-                               target: Cell
+                               target: list[int]
                                ) -> list[int]:
-        source[0] = self.aproximate_integers(source[0], target[0])
-        source[1] = self.aproximate_integers(source[1], target[1])
-        return source
+        result: list[int] = [0, 0]
+        result[0] = self.aproximate_integers(source[0], target[0])
+        result[1] = self.aproximate_integers(source[1], target[1])
+        return result
 
     @staticmethod
     def distance(a: Cell, b: Cell) -> int:
@@ -66,20 +77,18 @@ class MLXAdapter:
 
     @staticmethod
     def set_alpha(src: Surface, alpha: int) -> None:
-        dst = src.copy()
-        buf = dst.get_buffer()
+        buf = src.get_buffer()
         data = bytearray(buf.raw)
-        table = bytes(a * alpha // 255 for a in range(256))
-        data[3::4] = data[3::4].translate(table)
+        n = len(data) // 4
+        data[3::4] = bytes([alpha]) * n
         buf.write(bytes(data), 0)
         del buf
 
     def set_color(self, src: Surface, color: str) -> None:
         r, g, b = self.COLORS.get(color, (0, 0, 0))
-        dst = src.copy()
-        buf = dst.get_buffer()
+        buf = src.get_buffer()
         data = bytearray(buf.raw)
-        masks = dst.get_masks()
+        masks = src.get_masks()
         print(masks)
         for value, mask in zip((r, g, b), masks[:3]):
             print(mask.bit_length())

@@ -1,8 +1,6 @@
-from src.Ui.MazeGrid import MazeGrid
-from src.Ui.EntitiesAdapter import EntitiesAdapter
-from src.Ui.MLXAdapter import MLXAdapter
-from src.Game.GameState import GameState
-from pygame import (Surface, draw, display, font, time)
+from src.Ui import MazeGrid, EntitiesAdapter, MLXAdapter
+from src.Game import GameState
+from pygame import (Surface, display, font, time, SRCALPHA)
 from typing import Tuple
 from src.Entities.Ghost import Ghost
 from src.Entities.MovementEntity import MovementEntity
@@ -18,6 +16,7 @@ class MazeRenderer:
         self.screen: Surface = display.set_mode(
             self.maze_grid.get_window_size())
         self.background = Surface(self.maze_grid.get_window_size())
+        self.maze_ui = Surface(self.maze_grid.get_window_size())
         self.mlxadapter.set_color(self.background, 'black')
         self.initialize_veil()
         self.initialize_fire_efect()
@@ -27,12 +26,12 @@ class MazeRenderer:
         self.BLINK_INTERVAL = 200
 
     def initialize_veil(self) -> None:
-        self.pause_veil = Surface(self.maze_grid.get_window_size())
+        self.pause_veil = Surface(self.maze_grid.get_window_size(), SRCALPHA)
         self.mlxadapter.set_color(self.pause_veil, 'black')
         self.mlxadapter.set_alpha(self.pause_veil, 150)
 
     def initialize_fire_efect(self) -> None:
-        self.fire_efect = Surface(self.maze_grid.get_window_size())
+        self.fire_efect = Surface(self.maze_grid.get_window_size(), SRCALPHA)
         self.mlxadapter.set_color(self.fire_efect, 'orange')
         self.mlxadapter.set_alpha(self.fire_efect, 120)
 
@@ -56,21 +55,21 @@ class MazeRenderer:
         lines_color = self.maze_grid.get_lines_color()
         thick = self.maze_grid.get_thick()
         if (N):
-            draw.line(self.screen, lines_color,
-                      (init_x, init_y),
-                      (finish_x, init_y), thick)
+            self.mlxadapter.draw_line(self.maze_ui, lines_color,
+                                      (init_x, init_y),
+                                      (finish_x, init_y), thick)
         if (E):
-            draw.line(self.screen, lines_color,
-                      (finish_x, init_y),
-                      (finish_x, finish_y), thick)
+            self.mlxadapter.draw_line(self.maze_ui, lines_color,
+                                      (finish_x, init_y),
+                                      (finish_x, finish_y), thick)
         if (W):
-            draw.line(self.screen, lines_color,
-                      (init_x, init_y),
-                      (init_x, finish_y), thick)
+            self.mlxadapter.draw_line(self.maze_ui, lines_color,
+                                      (init_x, init_y),
+                                      (init_x, finish_y), thick)
         if (S):
-            draw.line(self.screen, lines_color,
-                      (init_x, finish_y),
-                      (finish_x, finish_y), thick)
+            self.mlxadapter.draw_line(self.maze_ui, lines_color,
+                                      (init_x, finish_y),
+                                      (finish_x, finish_y), thick)
 
     def create_maze_block(self, cell: int, x: int, y: int,
                           x_increment: int, y_increment: int) -> None:
@@ -119,9 +118,9 @@ class MazeRenderer:
             img_ghost = self.entity_adapter.make_ghost_freeze_icon()
             self.screen.blit(img_ghost, (current_x, margin_y))
 
-    def draw_map(self, dt: int) -> None:
+    def draw_map(self) -> None:
         self.screen.blit(self.background, (0, 0))
-        self.make_maze(self.maze_grid.width, self.maze_grid.height)
+        self.screen.blit(self.maze_ui, (0, 0))
         self.draw_pacgums()
         self.place_entity(self.game_state.player)
         for ghost in self.game_state.ghosts:
@@ -131,6 +130,11 @@ class MazeRenderer:
             self.place_entity(ghost)
         self.draw_hud()
         self.draw_icons()
+
+    def draw_maze(self) -> None:
+        self.maze_ui.blit(self.background, (0, 0))
+        self.make_maze(self.maze_grid.width, self.maze_grid.height)
+        self.screen.blit(self.maze_ui, (0, 0))
 
     def trigger_level_skip_effect(self) -> None:
         self.screen.blit(self.fire_efect, (0, 0))
