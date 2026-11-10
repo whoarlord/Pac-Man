@@ -12,7 +12,7 @@ from ..Config.ConfigParser import GameConfigModel
 from typing import Tuple, Callable
 
 
-class MazeUi:
+class GameState:
     KEY_DIRECTIONS = {
         pygame.K_UP: MovingDirection.MOVING_UP,
         pygame.K_w: MovingDirection.MOVING_UP,

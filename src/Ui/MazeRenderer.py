@@ -1,4 +1,5 @@
-from src.Pygame import MazeGrid, MazeUi, EntitiesAdapter, MLXAdapter
+from src.Ui import MazeGrid, EntitiesAdapter, MLXAdapter
+from src.Game import GameState
 from pygame import (Surface, draw, display, font, time)
 from typing import Tuple
 from src.Entities import (MovementEntity, Ghost)
@@ -6,7 +7,7 @@ from src.Entities import (MovementEntity, Ghost)
 
 class MazeRenderer:
     def __init__(self, maze_grid: MazeGrid,
-                 game_state: MazeUi, entity_adapter: EntitiesAdapter):
+                 game_state: GameState, entity_adapter: EntitiesAdapter):
         self.mlxadapter = MLXAdapter()
         self.maze_grid = maze_grid
         self.game_state = game_state

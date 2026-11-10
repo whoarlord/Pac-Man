@@ -1,14 +1,14 @@
 from typing import Tuple
-from src.Pygame.MazeGrid import MazeGrid
-from src.Pygame.MazeUi import MazeUi
-from src.Pygame.EntitiesAdapter import EntitiesAdapter
+from src.Ui.MazeGrid import MazeGrid
+from src.Game.GameState import GameState
+from src.Ui.EntitiesAdapter import EntitiesAdapter
 from src.Entities.MovementEntity import MovingDirection
 from src.Entities.Ghost import Ghost
 from src.Entities.Pacgums import Pacgum
 
 
 class LevelLoader:
-    def __init__(self, game_state: MazeUi, maze_grid: MazeGrid,
+    def __init__(self, game_state: GameState, maze_grid: MazeGrid,
                  entity_adapter: EntitiesAdapter) -> None:
         self.game_state = game_state
         self.maze_grid = maze_grid

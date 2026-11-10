@@ -2,7 +2,7 @@ import os
 import pygame
 from typing import Tuple
 from src.Entities.MovementEntity import MovingDirection
-from src.Pygame.MLXAdapter import MLXAdapter
+from src.Ui.MLXAdapter import MLXAdapter
 
 
 class EntitiesAdapter:
