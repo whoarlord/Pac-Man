@@ -1,3 +1,5 @@
+"""Pac-gums of the Pac-Man game and helpers to place them."""
+
 from typing import Callable
 import random
 
@@ -8,12 +10,21 @@ class Pacgum:
     The position is stored as (x, y), where x is the column and y is
     the row. This class does not know the map: placing and removing
     pac-gums is done outside.
+
+    Attributes:
+        x: Column of the pac-gum.
+        y: Row of the pac-gum.
+        is_super: True for a super pac-gum, False for a normal one.
     """
 
     def __init__(self, x: int, y: int, is_super: bool) -> None:
         """Create a pac-gum at position (x, y).
 
-        is_super is True for a super pac-gum and False for a normal one.
+        Args:
+            x: Column of the pac-gum.
+            y: Row of the pac-gum.
+            is_super: True for a super pac-gum and False for a normal
+                one.
         """
 
         self.x = x
@@ -26,6 +37,13 @@ class Pacgum:
 
         The order is top-left, top-right, bottom-left, bottom-right.
         It does not check whether the corners can be stepped on.
+
+        Args:
+            width: Number of columns of the map.
+            height: Number of rows of the map.
+
+        Returns:
+            A list with the four corners as (x, y) tuples.
         """
 
         corner1 = (0, 0)
@@ -42,10 +60,22 @@ class Pacgum:
         """Return num_pacgums random free positions, without repeats.
 
         A cell is free if is_walkable(cell) is True and it is not in
-        occupied. width and height are the number of columns and rows
-        of the map. The set occupied is not modified.
+        occupied. The set occupied is not modified.
 
-        Raise ValueError if there are fewer free cells than num_pacgums.
+        Args:
+            width: Number of columns of the map.
+            height: Number of rows of the map.
+            num_pacgums: Number of positions to return.
+            is_walkable: Function that receives a cell and returns True
+                if it can be stepped on.
+            occupied: Cells that must not be used.
+
+        Returns:
+            A list with num_pacgums different free cells as (x, y)
+            tuples.
+
+        Raises:
+            ValueError: If there are fewer free cells than num_pacgums.
         """
 
         positions: list[tuple[int, int]] = []

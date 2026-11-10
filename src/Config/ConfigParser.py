@@ -1,3 +1,10 @@
+"""Configuration parsing for the Pac-Man game.
+
+This module defines the Pydantic models that describe the game
+configuration and a parser that loads them from a JSON file, tolerating
+comments, unknown keys and invalid values.
+"""
+
 import os
 import json
 from typing import Any, ClassVar
@@ -5,7 +12,15 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 
 
 class LevelConfig(BaseModel):
-    """Configuration model for a single game level dimensions."""
+    """Configuration model for the dimensions of a single game level.
+
+    Out-of-range values are clamped and values of the wrong type are
+    replaced by the default, each with a warning printed to stdout.
+
+    Attributes:
+        width: Level width in cells. Must be between 5 and 100.
+        height: Level height in cells. Must be between 5 and 100.
+    """
 
     width: int = Field(default=20, ge=5, le=100)
     height: int = Field(default=20, ge=5, le=100)
@@ -13,7 +28,19 @@ class LevelConfig(BaseModel):
     @field_validator("width", "height", mode="before")
     @classmethod
     def validate_dimensions(cls, v: Any, info: Any) -> int:
-        """Ensure dimensions are valid positive integers, clamping if needed.
+        """Validate a level dimension, clamping or defaulting if needed.
+
+        Runs before Pydantic's own validation. Values below 5 are
+        clamped to 5, values above 100 are clamped to 100, and values
+        that cannot be converted to an integer fall back to 20.
+
+        Args:
+            v: Raw value read from the configuration.
+            info: Pydantic validation info, used to get the field name
+                for the warning messages.
+
+        Returns:
+            A valid integer dimension between 5 and 100.
         """
 
         field_name = (info.field_name if hasattr(info, 'field_name')
@@ -36,17 +63,30 @@ class LevelConfig(BaseModel):
 
 
 class GameConfigModel(BaseModel):
-    """Main configuration model for the Pac-Man game."""
+    """Main configuration model for the Pac-Man game.
 
-    # Minimum number of levels the game must have.
+    Unknown keys are ignored and every field has a default value, so an
+    empty model is always a valid configuration.
+
+    Attributes:
+        MIN_LEVELS: Minimum number of levels the game must have.
+        PACGUM_RATIO: Ratio used to compute the number of pacgums.
+        highscore_filename: Path of the file where high scores are saved.
+        levels: Configuration of each level, padded with default levels
+            up to MIN_LEVELS.
+        lives: Number of lives the player starts with (1 to 10).
+        pacgum: Number of pacgums per level, or None to compute it.
+        points_per_pacgum: Points awarded for eating a pacgum.
+        points_per_super_pacgum: Points awarded for a super pacgum.
+        points_per_ghost: Points awarded for eating a ghost.
+        seed: Seed for the random number generator.
+        level_max_time: Maximum time allowed per level, in seconds.
+    """
+
     MIN_LEVELS: ClassVar[int] = 10
     PACGUM_RATIO: ClassVar[float] = 0.9
 
     highscore_filename: str = "highscores.json"
-    # Un objeto LevelConfig nuevo por cada nivel por defecto.
-    # default_factory con lambda: evita compartir referencias de listas
-    # en memoria y genera una lista nueva con un nivel por defecto si no
-    # viene especificado en el JSON.
     levels: list[LevelConfig] = Field(
         default_factory=lambda: [
             LevelConfig() for _ in range(GameConfigModel.MIN_LEVELS)])
@@ -61,7 +101,15 @@ class GameConfigModel(BaseModel):
     @field_validator("levels", mode="after")
     @classmethod
     def ensure_min_levels(cls, v: list[LevelConfig]) -> list[LevelConfig]:
-        """Complete the levels with default ones up to MIN_LEVELS."""
+        """Complete the levels with default ones up to MIN_LEVELS.
+
+        Args:
+            v: Validated list of levels read from the configuration.
+
+        Returns:
+            A new list with at least MIN_LEVELS levels. The input list is
+            not modified.
+        """
 
         levels = list(v)
         if len(levels) < cls.MIN_LEVELS:
@@ -80,10 +128,19 @@ class ConfigParser:
 
     Handles comments starting with '#', ignores unknown keys, and clamps
     invalid values to safe defaults according to project specifications.
+
+    Attributes:
+        filepath: Path of the JSON configuration file.
+        config: Validated game configuration. Falls back to default
+            values if the file is missing or malformed.
     """
 
     def __init__(self, filepath: str) -> None:
-        """Initialize the parser and load the configuration file."""
+        """Initialize the parser and load the configuration file.
+
+        Args:
+            filepath: Path of the JSON configuration file to load.
+        """
 
         self.filepath = filepath
         self.config = self._load_and_validate_configuration()
@@ -94,14 +151,18 @@ class ConfigParser:
         Each invalid key is reported with a message and removed, so the
         default value is used for it. The valid keys are kept. The dict
         given is not modified.
+
+        Args:
+            data: Dictionary with the raw configuration read from JSON.
+
+        Returns:
+            A validated GameConfigModel. If no invalid key can be
+            identified, a model with all default values is returned.
         """
 
-        # Trabajamos con una copia para no modificar el dict de fuera.
         clean = dict(data)
         while True:
             try:
-                # **clean desempaqueta el diccionario y se lo pasa a
-                # Pydantic, que valida tipos y aplica valores por defecto.
                 return GameConfigModel(**clean)
             except ValidationError as error:
                 removed = 0
@@ -115,13 +176,22 @@ class ConfigParser:
                               f"({item['msg']}). Using the default value.")
                         clean.pop(key)
                         removed += 1
-                # Si no se ha borrado ninguna clave, volver a intentarlo
-                # fallaría para siempre: usamos todo por defecto.
                 if removed == 0:
                     return GameConfigModel()
 
     def _load_and_validate_configuration(self) -> GameConfigModel:
-        """Loads the JSON, strips comments, and validates it using Pydantic."""
+        """Load the JSON file, strip comments and validate it.
+
+        Lines whose first non-blank character is '#' are replaced by empty
+        lines so the line numbers in JSON error messages stay accurate.
+        Any problem (missing file, syntax error, wrong root type or
+        unexpected exception) is reported and the default configuration
+        is returned instead of raising.
+
+        Returns:
+            The validated GameConfigModel, or one with default values if
+            the file could not be loaded.
+        """
 
         if not os.path.exists(self.filepath):
             print(f"Error: Configuration file '{self.filepath}' not found."
@@ -132,8 +202,6 @@ class ConfigParser:
             with open(self.filepath, "r", encoding='utf-8') as f:
                 lines = f.readlines()
 
-            # Sustituir líneas de comentarios por líneas vacías para mantener
-            # la coherencia con las líneas del archivo JSON original.
             clean_lines = []
             for line in lines:
                 stripped = line.strip()
@@ -150,8 +218,6 @@ class ConfigParser:
                       "Using defaults.")
                 return GameConfigModel()
 
-            # Pydantic ignora las claves desconocidas, y _build_model se
-            # encarga de los valores inválidos clave por clave.
             return self._build_model(data)
 
         except json.JSONDecodeError as e:
