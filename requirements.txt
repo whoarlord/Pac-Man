@@ -1,4 +1,0 @@
-pygame
-pydantic>=2
-mypy
-flake8
