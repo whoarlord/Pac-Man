@@ -8,7 +8,9 @@ comments, unknown keys and invalid values.
 import os
 import json
 from typing import Any, ClassVar
-from pydantic import BaseModel, Field, ValidationError, field_validator
+from pydantic import (BaseModel, Field,
+                      ValidationError, field_validator,
+                      model_validator)
 
 
 class LevelConfig(BaseModel):
@@ -92,9 +94,9 @@ class GameConfigModel(BaseModel):
             LevelConfig() for _ in range(GameConfigModel.MIN_LEVELS)])
     lives: int = Field(default=3, gt=0, le=10)
     pacgum: int | None = Field(default=None, gt=0)
-    points_per_pacgum: int = Field(default=10, gt=0)
-    points_per_super_pacgum: int = Field(default=50, gt=0)
-    points_per_ghost: int = Field(default=200, gt=0)
+    points_per_pacgum: int = Field(default=10, gt=0, lt=100000)
+    points_per_super_pacgum: int = Field(default=50, gt=0, lt=100000)
+    points_per_ghost: int = Field(default=200, gt=0, lt=100000)
     seed: int = Field(default=42, gt=0)
     level_max_time: int = Field(default=90, gt=0)
 
@@ -121,6 +123,14 @@ class GameConfigModel(BaseModel):
             while len(levels) < cls.MIN_LEVELS:
                 levels.append(LevelConfig())
         return levels
+
+    @model_validator(mode="after")
+    def warn_defaults(self) -> "GameConfigModel":
+        """Print a message for the values where the default was selected"""
+        missing = set(type(self).model_fields) - self.model_fields_set
+        if missing:
+            print(f"Notice: using defaults for: {', '.join(sorted(missing))}")
+        return self
 
 
 class ConfigParser:
