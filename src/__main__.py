@@ -64,14 +64,14 @@ def main() -> None:
         parser = ConfigParser(config_path)
 
         while True:
-            gameState = GameState(parser.config)
+            game_state = GameState(parser.config)
 
-            width, height = gameState.get_actual_level_size()
+            width, height = game_state.get_actual_level_size()
             maze_grid = MazeGrid(width, height)
 
             entity_adapter = EntitiesAdapter(maze_grid.get_cell_size())
 
-            maze_renderer = MazeRenderer(maze_grid, gameState, entity_adapter)
+            maze_renderer = MazeRenderer(maze_grid, game_state, entity_adapter)
             entity_adapter.preload_images()
 
             menu = MainMenu(maze_renderer.screen, parser.config)
@@ -79,13 +79,13 @@ def main() -> None:
             menu.state = "MAIN"
             menu.run()
 
-            level_loader = LevelLoader(gameState, maze_grid, entity_adapter)
-            game_rules = GameRules(gameState, maze_grid, level_loader)
-            movement_controller = MovementController(gameState, maze_grid,
+            level_loader = LevelLoader(game_state, maze_grid, entity_adapter)
+            game_rules = GameRules(game_state, maze_grid, level_loader)
+            movement_controller = MovementController(game_state, maze_grid,
                                                      entity_adapter)
 
             game_controller = GameController(
-                game_state=gameState,
+                game_state=game_state,
                 renderer=maze_renderer,
                 level_loader=level_loader,
                 rules=game_rules,
@@ -97,21 +97,21 @@ def main() -> None:
 
             game_controller.run()
 
-            if gameState.player.lives <= 0:
+            if game_state.player.lives <= 0:
                 end_screen = GameOverScreen(maze_renderer.screen,
                                             parser.config,
-                                            gameState.player.score)
-                gameState.back_to_menu = end_screen.run()
-            elif (not gameState.pacgums
-                    and not gameState.super_pacgums
-                    and gameState.current_level + 1
+                                            game_state.player.score)
+                game_state.back_to_menu = end_screen.run()
+            elif (not game_state.pacgums
+                    and not game_state.super_pacgums
+                    and game_state.current_level + 1
                     >= len(parser.config.levels)):
                 victory_screen = VictoryScreen(maze_renderer.screen,
                                                parser.config,
-                                               gameState.player.score)
-                gameState.back_to_menu = victory_screen.run()
+                                               game_state.player.score)
+                game_state.back_to_menu = victory_screen.run()
 
-            if not gameState.back_to_menu:
+            if not game_state.back_to_menu:
                 break
     except KeyboardInterrupt:
         print("\nGame closed cleanly by the user (Ctrl+C).")
