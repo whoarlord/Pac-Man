@@ -314,10 +314,25 @@ Technical summary of how the game works.
 
 ### MLX compatibility
 
-> this section is **empty on purpose**. It has to be
-> discussed with the partner before writing it: which equivalences with the
-> MLX library are declared for the pygame functions that the project still
-> uses, and how they are justified.
+This project uses pygame for rendering. Because the subject restricts which
+pygame functions may be used, we implemented our own versions of the
+following primitives through an adapter layer:
+
+- `draw_line`: built from `set_at` and a pixel-by-pixel iteration.
+- `draw_circle`: built from `set_at`, using the Manhattan distance to control
+  the circle's thickness.
+- `set_color`: sets the RGB color of an entire surface.
+- `set_alpha`: sets the transparency of a surface.
+- `scale_image`: resizes an image to fit the grid cell size.
+
+Other pygame functions, such as `pygame.time.Clock` and `pygame.font.Font`,
+were used directly, since replacing them would have had little impact on the
+project.
+
+The most heavily used pygame element is `pygame.Surface`, which we treat
+purely as a data container (similar to a DTO, or Data Transfer Object):
+it only holds pixel data, and all drawing logic lives in our own adapter
+functions.
 
 ## General Software Architecture
 
