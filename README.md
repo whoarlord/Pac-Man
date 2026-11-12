@@ -451,14 +451,8 @@ the start. These were the main issues:
 ## Resources
 
 - [Pygame documentation](https://www.pygame.org/docs/)
-- [Pydantic documentation](https://docs.pydantic.dev/)
 - [uv documentation](https://docs.astral.sh/uv/)
 - [PyInstaller documentation](https://pyinstaller.org/)
-- [mypy documentation](https://mypy.readthedocs.io/) and
-  [flake8 documentation](https://flake8.pycqa.org/)
-- [PEP 257 – Docstring Conventions](https://peps.python.org/pep-0257/) and the
-  [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html)
-  (docstring format used in the project)
 - [Breadth-first search](https://en.wikipedia.org/wiki/Breadth-first_search),
   the algorithm used to compute the distances of the ghosts
 - [The Pac-Man Dossier](https://pacman.holenet.info/), about the behaviour of
