@@ -281,7 +281,9 @@ Technical summary of how the game works.
     line from the red ghost to that cell.
   - **Yellow:** it chases the player, but when it is closer than 8 cells it
     goes back to its home corner, until it is farther than 11 cells.
-- While scared, a ghost goes back to its home corner.
+- While scared, a ghost flees directly from the player when closer than 8
+  cells (until it reaches a distance greater than 11 cells), and goes back
+  to its home corner once at a safe distance.
 - A super pacgum scares all the ghosts for 7 seconds. In the last 2 seconds
   the scared ghosts blink.
 - An eaten ghost goes back to its corner, is not drawn or moved for 5 seconds

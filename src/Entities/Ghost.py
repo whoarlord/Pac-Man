@@ -8,7 +8,7 @@ from pygame import Surface
 
 
 class Ghost(MovementEntity):
-    """Pac-Man ghost: chases the player or goes back home when scared.
+    """Pac-Man ghost: chases the player or flees when scared.
 
     Which of the two to use depends on is_scared, and that is checked
     outside this class.
@@ -22,6 +22,10 @@ class Ghost(MovementEntity):
         CLYDE_DISTANCE: Distance under which the yellow ghost retreats.
         CLYDE_MARGIN: Extra distance the yellow ghost must gain before
             it stops retreating.
+        SCARED_FLEE_DISTANCE: Distance under which a scared ghost flees
+            directly from the player instead of going home.
+        SCARED_FLEE_MARGIN: Extra distance a scared ghost must gain
+            before it stops fleeing from the player and goes home.
         available_cell: Function that tells whether a cell is
             inside the map.
         color: Color of the ghost, which decides how it chases.
@@ -29,12 +33,14 @@ class Ghost(MovementEntity):
         spawn_y: Row where the ghost respawns.
         respawn_timer: Remaining time before the ghost comes back. It
             is greater than 0 while the ghost is eaten.
-        scared: True if the ghost is scared and goes back home instead
-            of chasing the player.
+        scared: True if the ghost is scared and flees instead of
+            chasing the player.
         home_x: Column of the ghost's home cell.
         home_y: Row of the ghost's home cell.
         wait_ticks: Ticks the ghost has been waiting for a blocked cell.
         retreating: True if the yellow ghost is going back home.
+        fleeing_player: True if the scared ghost is fleeing directly
+            from the player rather than going home.
     """
 
     class GhostColor(Enum):
@@ -55,6 +61,8 @@ class Ghost(MovementEntity):
     MAX_WAIT_TICKS = 12
     CLYDE_DISTANCE = 8
     CLYDE_MARGIN = 3
+    SCARED_FLEE_DISTANCE = 8
+    SCARED_FLEE_MARGIN = 3
 
     def __init__(self, x: int, y: int, x_pixel: int,
                  y_pixel: int, image: Surface,
@@ -90,6 +98,7 @@ class Ghost(MovementEntity):
         self.home_y = y
         self.wait_ticks = 0
         self.retreating = False
+        self.fleeing_player = False
 
     def get_home_coordinates(self) -> tuple[int, int]:
         """Return the home cell of the ghost.
@@ -110,10 +119,11 @@ class Ghost(MovementEntity):
         self.image = image
 
     def respawn(self) -> None:
-        """Move the ghost back to its spawn cell."""
+        """Move the ghost back to its spawn cell and reset fleeing."""
 
         self.x = self.spawn_x
         self.y = self.spawn_y
+        self.fleeing_player = False
 
     def get_occupied_cells(self) -> set[tuple[int, int]]:
         """Return the cells the ghost is occupying.
@@ -461,6 +471,35 @@ class Ghost(MovementEntity):
 
         cell = self._choose_cell(self.get_home_coordinates(), True, blocked)
         self._move_to(cell)
+
+    def flee(self, player_pos: tuple[int, int],
+             blocked: set[tuple[int, int]] | None = None) -> None:
+        """Move the ghost away from the player when close, or home otherwise.
+
+        When the ghost is closer than SCARED_FLEE_DISTANCE to player_pos,
+        it actively flees from the player until it reaches a distance
+        greater than SCARED_FLEE_DISTANCE + SCARED_FLEE_MARGIN. Once at a
+        safe distance, it goes back to its home cell.
+
+        Args:
+            player_pos: Cell as (x, y) of the player.
+            blocked: Cells that cannot be used, such as the ones
+                occupied by other ghosts.
+        """
+
+        distance = self._get_distance_to_actual_cell(self.get_coordinates(),
+                                                     player_pos)
+        if self.fleeing_player:
+            if distance > self.SCARED_FLEE_DISTANCE + self.SCARED_FLEE_MARGIN:
+                self.fleeing_player = False
+        elif distance < self.SCARED_FLEE_DISTANCE:
+            self.fleeing_player = True
+
+        if self.fleeing_player:
+            cell = self._choose_cell(player_pos, False, blocked)
+            self._move_to(cell)
+        else:
+            self.run_to_home(blocked)
 
     def is_eaten(self) -> bool:
         """Tell whether the ghost has been eaten.

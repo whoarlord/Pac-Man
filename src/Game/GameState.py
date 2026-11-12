@@ -198,7 +198,7 @@ class GameState:
 
         The player is powered down and the power-up timer is reset. If
         the player has no lives left, the game stops running. Otherwise,
-        every ghost respawns and stops being scared or eaten.
+        every ghost respawns and stops being scared, fleeing or eaten.
         """
 
         self.player.lose_life()
@@ -211,6 +211,7 @@ class GameState:
             ghost.respawn()
             ghost.respawn_timer = 0
             ghost.scared = False
+            ghost.fleeing_player = False
 
     def bind_events(self, handle_pause: Callable[[int], None]
                     ) -> dict[str, bool]:

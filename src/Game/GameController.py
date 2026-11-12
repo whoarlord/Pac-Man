@@ -147,7 +147,7 @@ class GameController:
                             blocked = (self.movement_controller.
                                        get_blocked_cells(ghost))
                             if ghost.is_scared():
-                                ghost.run_to_home(blocked)
+                                ghost.flee(player_pos, blocked)
                             else:
                                 ghost.catch_player(player_pos,
                                                    player.current_direction,

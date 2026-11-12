@@ -82,8 +82,8 @@ class Player(MovementEntity):
     def power_up(self) -> None:
         """Set is_powered_up to True (the player ate a super pacgum).
 
-        While it is True, the ghosts are scared and go home instead
-            of chasing.
+        While it is True, the ghosts are scared and flee instead of
+            chasing.
         """
 
         self.is_powered_up = True

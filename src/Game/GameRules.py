@@ -77,11 +77,12 @@ class GameRules:
         ignored.
 
         If the player touches a scared ghost, the ghost stops being
-        scared, waits RESPAWN_DELAY milliseconds, goes back to its spawn
-        cell and stops, and the player gets points_per_ghost. If the
-        ghost is not scared and the player is not invincible, it calls
-        lose_life_and_reset, prints the remaining lives and the rest of
-        the ghosts are not checked in that call.
+        scared and fleeing, waits RESPAWN_DELAY milliseconds, goes back
+        to its spawn cell and stops, and the player gets
+        points_per_ghost. If the ghost is not scared and the player is
+        not invincible, it calls lose_life_and_reset, prints the
+        remaining lives and the rest of the ghosts are not checked in
+        that call.
         """
 
         width_c, height_c = self.maze_grid.get_cell_size()
@@ -107,6 +108,7 @@ class GameRules:
             if not separated:
                 if ghost.is_scared():
                     ghost.scared = False
+                    ghost.fleeing_player = False
                     ghost.respawn_timer = self.game_state.RESPAWN_DELAY
                     self.game_state.player.add_ghost_points()
                     ghost.respawn()
@@ -125,11 +127,11 @@ class GameRules:
 
         While the player is powered up, power_up_timer grows. When it
         reaches POWER_UP_DURATION, the player powers down, the ghosts
-        stop being scared and the timer is reset. The respawn_timer of
-        the eaten ghosts goes down to 0. level_timer grows, and when it
-        reaches level_max_time seconds, it prints a message, sets the
-        lives of the player to 0, stops the game and resets
-        level_timer.
+        stop being scared and fleeing, and the timer is reset. The
+        respawn_timer of the eaten ghosts goes down to 0. level_timer
+        grows, and when it reaches level_max_time seconds, it prints a
+        message, sets the lives of the player to 0, stops the game and
+        resets level_timer.
 
         Args:
             dt: Milliseconds since the last frame.
@@ -143,6 +145,7 @@ class GameRules:
                 player.power_down()
                 for ghost in self.game_state.ghosts:
                     ghost.scared = False
+                    ghost.fleeing_player = False
                 self.game_state.power_up_timer = 0
 
         for ghost in self.game_state.ghosts:
