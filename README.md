@@ -460,3 +460,17 @@ the start. These were the main issues:
 
 ### Use of AI
 
+AI tools were used strictly as a support and brainstorming resource during the
+development of this project. Specifically, they
+assisted with:
+
+- **Architecture and refactoring ideas:** discussing how to split
+  responsibilities across modules (such as decoupling rendering, grid
+  calculations and game state).
+- **Error handling and edge cases:** identifying potential failure scenarios
+  during configuration parsing, file reading and user input validation.
+- **Documentation and review:** structuring docstrings and refining technical
+  explanations.
+
+All design decisions, implementation and testing were carried out
+and validated by the authors.
