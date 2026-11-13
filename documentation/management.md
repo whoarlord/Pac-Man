@@ -34,7 +34,7 @@ gantt
     Adaptacion a MLXAdapter              :crit, p12, 2026-11-05, 2026-11-08
  
     section Entrega
-    Plan de pruebas y documentacion      :p13, 2026-11-08, 2026-11-11
+    Documentacion      :p13, 2026-11-08, 2026-11-11
     Entrega                              :milestone, pm, 2026-11-12, 0d
 ```
  

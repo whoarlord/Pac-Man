@@ -419,6 +419,8 @@ game, `config.json`, `launch.sh` and the in-package instructions
 
 The packaged game can be published on itch.io as a free, unlisted build.
 
+You can find ours in https://iarrien.itch.io/pacman
+
 ## Project Management
 
 The project was planned and tracked with a timeline (Gantt charts made with
